@@ -252,6 +252,32 @@
 	</form>
 </section>
 
+<section class="mb-12 max-w-xl">
+	<h2 class="label mb-1">Invite someone to Watchlist</h2>
+	<p class="mb-3 text-sm text-muted-foreground">
+		They get their own account and list, without joining any of yours. The link works once and lasts
+		seven days.
+	</p>
+	<form
+		method="POST"
+		action="?/invite"
+		use:enhance={() =>
+			async ({ result }) => {
+				const token = result.type === 'success' ? result.data?.invite : undefined;
+				if (typeof token !== 'string') return void toast.error('Couldn’t make an invite link.');
+				const link = `${location.origin}/invite/${token}`;
+				try {
+					await navigator.clipboard.writeText(link);
+					toast.success('Invite link copied. Send it to them.');
+				} catch {
+					toast(`Send them this link: ${link}`, { duration: 30_000 });
+				}
+			}}
+	>
+		<Button type="submit" variant="outline">Invite someone</Button>
+	</form>
+</section>
+
 <section class="max-w-xl border-t pt-6">
 	<h2 class="label mb-2">On your phone</h2>
 	<p class="text-sm leading-relaxed text-muted-foreground">

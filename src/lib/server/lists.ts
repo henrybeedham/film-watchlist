@@ -129,23 +129,8 @@ export function openInvites(listId: number) {
 	);
 }
 
-/** Someone's open invites to the site that don't come with a list. */
-export function openSiteInvites(userId: string) {
-	return all<OpenInvite>(
-		`SELECT i.token, i.created_at AS createdAt, i.expires_at AS expiresAt, u.name AS createdBy
-		 FROM invites i JOIN "user" u ON u.id = i.created_by
-		 WHERE i.list_id IS NULL AND i.created_by = ? AND i.used_at IS NULL AND i.expires_at > ?
-		 ORDER BY i.created_at DESC`,
-		[userId, now()]
-	);
-}
-
 export function revokeInvite(listId: number, t: string) {
 	run('DELETE FROM invites WHERE token = ? AND list_id = ?', [t, listId]);
-}
-
-export function revokeSiteInvite(userId: string, t: string) {
-	run('DELETE FROM invites WHERE token = ? AND list_id IS NULL AND created_by = ?', [t, userId]);
 }
 
 /** A valid, unused invite and the list it's for (null for a site-only invite). */

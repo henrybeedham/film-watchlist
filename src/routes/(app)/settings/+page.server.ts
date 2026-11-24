@@ -4,6 +4,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { appContext } from '#lib/server/context.js';
 import { setPrefs } from '#lib/server/prefs.js';
 import { isSiteAdmin, setSiteTheme, siteTheme } from '#lib/server/site.js';
+import { createInvite } from '#lib/server/lists.js';
 import { regionProviderCatalogue } from '#lib/server/tmdb.js';
 import { auth } from '#lib/server/auth.js';
 import { isMode, isTheme } from '#lib/themes.js';
@@ -99,5 +100,11 @@ export const actions: Actions = {
 			throw e;
 		}
 		return { passwordSaved: true };
+	},
+
+	// An invite to the site only: they get an account and a list of their own, not yours.
+	invite: ({ locals }) => {
+		const { user } = appContext(locals);
+		return { invite: createInvite(null, user.id) };
 	}
 };
