@@ -1,0 +1,21 @@
+{
+	"name": "Watchlist",
+	"short_name": "Watchlist",
+	"description": "Films and series to watch, shared with the people who keep recommending them.",
+	"lang": "en-GB",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"background_color": "#1f1a16",
+	"theme_color": "#1f1a16",
+	"icons": [
+		{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+		{ "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+		{ "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+		{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+	],
+	"shortcuts": [
+		{ "name": "Add a title", "url": "/?add", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+		{ "name": "Pick something for tonight", "short_name": "Tonight", "url": "/tonight", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+	]
+}

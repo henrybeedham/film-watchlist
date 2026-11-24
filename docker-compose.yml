@@ -1,0 +1,44 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    # No published port: Coolify's proxy routes to 3000. Set the domain in Coolify as
+    # https://your.domain:3000. Don't publish the port: the app trusts X-Forwarded-For from the
+    # proxy for visitor IPs (used by sign-in rate limits), and a direct connection could fake it.
+    expose:
+      - '3000'
+    # Hardening: no privilege escalation, a read-only root filesystem, and only the capabilities
+    # the entrypoint needs to fix /data ownership before it drops to an unprivileged user.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      DATA_DIR: /data
+      # The public URL is fixed rather than read from proxy headers, so it can't be spoofed.
+      ORIGIN: ${BETTER_AUTH_URL:?}
+      # Coolify's proxy is the one hop in front of the app; the visitor's IP is the last it adds.
+      ADDRESS_HEADER: x-forwarded-for
+      XFF_DEPTH: '1'
+      BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT:-1M}
+      # The public https URL, e.g. https://watchlist.example.com (sign-in cookies and links use it).
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?}
+      # Optional: generated into /data/.auth-secret on first start when empty.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+      # TMDB API key or read access token, for posters, details and streaming info.
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      WATCH_REGION: ${WATCH_REGION:-GB}
+    volumes:
+      - app-data:/data
+
+volumes:
+  app-data:

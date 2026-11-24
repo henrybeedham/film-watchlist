@@ -1,0 +1,346 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn-svelte/tailwind.css';
+
+/* Fonts: self-hosted. Browsers only download the faces the active theme uses. */
+@import '@fontsource-variable/fraunces/opsz.css';
+@import '@fontsource-variable/fraunces/opsz-italic.css';
+@import '@fontsource-variable/source-serif-4/opsz.css';
+@import '@fontsource-variable/source-serif-4/opsz-italic.css';
+@import '@fontsource/instrument-serif/400.css';
+@import '@fontsource/instrument-serif/400-italic.css';
+@import '@fontsource-variable/schibsted-grotesk/wght.css';
+@import '@fontsource-variable/big-shoulders/wght.css';
+@import '@fontsource-variable/newsreader/opsz.css';
+@import '@fontsource-variable/newsreader/opsz-italic.css';
+@import '@fontsource-variable/ibm-plex-sans/wght.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+@custom-variant dark (&:is(.dark *));
+@custom-variant programme (&:where([data-theme='programme'] *));
+@custom-variant screening (&:where([data-theme='screening'] *));
+@custom-variant posters (&:where([data-theme='posters'] *));
+@custom-variant catalogue (&:where([data-theme='catalogue'] *));
+
+/* ---- Repertory programme: cream paper, ink, vermilion --------------------- */
+:root,
+[data-theme='programme'] {
+	--font-display-face: 'Fraunces Variable', Georgia, serif;
+	--font-body-face: 'Source Serif 4 Variable', Georgia, serif;
+	--font-mono-face: 'IBM Plex Mono', ui-monospace, monospace;
+	--display-weight: 600;
+	--display-style: normal;
+	--display-case: none;
+	--display-tracking: -0.015em;
+	--display-scale: 1;
+	--label-tracking: 0.14em;
+	--radius: 0rem;
+
+	--background: oklch(0.955 0.018 85);
+	--foreground: oklch(0.22 0.015 60);
+	--card: oklch(0.972 0.014 85);
+	--card-foreground: var(--foreground);
+	--popover: oklch(0.975 0.012 85);
+	--popover-foreground: var(--foreground);
+	--primary: oklch(0.52 0.17 32);
+	--primary-foreground: oklch(0.98 0.01 85);
+	--secondary: oklch(0.915 0.022 82);
+	--secondary-foreground: var(--foreground);
+	--muted: oklch(0.925 0.02 82);
+	--muted-foreground: oklch(0.46 0.02 60);
+	--accent: oklch(0.915 0.026 78);
+	--accent-foreground: var(--foreground);
+	--destructive: oklch(0.5 0.19 27);
+	--border: oklch(0.8 0.028 75);
+	--input: oklch(0.74 0.03 75);
+	--ring: oklch(0.52 0.17 32);
+	--highlight: oklch(0.52 0.17 32);
+	--highlight-foreground: oklch(0.98 0.01 85);
+	--poster-shadow: none;
+}
+[data-theme='programme'].dark {
+	--background: oklch(0.2 0.012 60);
+	--foreground: oklch(0.92 0.02 85);
+	--card: oklch(0.235 0.013 60);
+	--popover: oklch(0.25 0.014 60);
+	--primary: oklch(0.7 0.15 40);
+	--primary-foreground: oklch(0.18 0.02 40);
+	--secondary: oklch(0.27 0.014 60);
+	--muted: oklch(0.26 0.012 60);
+	--muted-foreground: oklch(0.73 0.02 80);
+	--accent: oklch(0.29 0.016 60);
+	--destructive: oklch(0.68 0.17 27);
+	--border: oklch(0.36 0.016 60);
+	--input: oklch(0.42 0.016 60);
+	--ring: oklch(0.7 0.15 40);
+	--highlight: oklch(0.7 0.15 40);
+	--highlight-foreground: oklch(0.18 0.02 40);
+}
+
+/* ---- Late-night screening: oxblood dark, brass, velvet red ---------------- */
+[data-theme='screening'] {
+	--font-display-face: 'Instrument Serif', Georgia, serif;
+	--font-body-face: 'Schibsted Grotesk Variable', system-ui, sans-serif;
+	--font-mono-face: 'IBM Plex Mono', ui-monospace, monospace;
+	--display-weight: 400;
+	--display-style: italic;
+	--display-case: none;
+	--display-tracking: 0;
+	--display-scale: 1.18;
+	--label-tracking: 0.18em;
+	--radius: 0.25rem;
+
+	/* Light ("matinee") */
+	--background: oklch(0.95 0.012 30);
+	--foreground: oklch(0.2 0.03 20);
+	--card: oklch(0.97 0.01 30);
+	--card-foreground: var(--foreground);
+	--popover: oklch(0.975 0.008 30);
+	--popover-foreground: var(--foreground);
+	--primary: oklch(0.42 0.15 22);
+	--primary-foreground: oklch(0.97 0.01 80);
+	--secondary: oklch(0.91 0.016 25);
+	--secondary-foreground: var(--foreground);
+	--muted: oklch(0.915 0.015 25);
+	--muted-foreground: oklch(0.46 0.03 20);
+	--accent: oklch(0.9 0.02 25);
+	--accent-foreground: var(--foreground);
+	--destructive: oklch(0.5 0.19 27);
+	--border: oklch(0.84 0.02 25);
+	--input: oklch(0.78 0.025 25);
+	--ring: oklch(0.42 0.15 22);
+	--highlight: oklch(0.6 0.11 75);
+	--highlight-foreground: oklch(0.18 0.02 20);
+	--poster-shadow: 0 10px 24px -12px oklch(0.2 0.05 20 / 0.45);
+}
+[data-theme='screening'].dark {
+	--background: oklch(0.155 0.018 20);
+	--foreground: oklch(0.93 0.015 80);
+	--card: oklch(0.19 0.024 20);
+	--popover: oklch(0.21 0.026 20);
+	--primary: oklch(0.79 0.12 80);
+	--primary-foreground: oklch(0.17 0.02 20);
+	--secondary: oklch(0.33 0.11 22);
+	--secondary-foreground: oklch(0.95 0.015 80);
+	--muted: oklch(0.21 0.024 20);
+	--muted-foreground: oklch(0.71 0.025 40);
+	--accent: oklch(0.25 0.04 20);
+	--destructive: oklch(0.68 0.17 27);
+	--border: oklch(0.3 0.035 20);
+	--input: oklch(0.36 0.04 20);
+	--ring: oklch(0.79 0.12 80);
+	--highlight: oklch(0.79 0.12 80);
+	--highlight-foreground: oklch(0.17 0.02 20);
+	--poster-shadow: 0 14px 40px -14px oklch(0 0 0 / 0.9);
+}
+
+/* ---- Poster wall: posters first, black and marquee yellow ----------------- */
+[data-theme='posters'] {
+	--font-display-face: 'Big Shoulders Variable', 'Arial Narrow', sans-serif;
+	--font-body-face: 'Schibsted Grotesk Variable', system-ui, sans-serif;
+	--font-mono-face: 'IBM Plex Mono', ui-monospace, monospace;
+	--display-weight: 800;
+	--display-style: normal;
+	--display-case: uppercase;
+	--display-tracking: 0.01em;
+	--display-scale: 1.1;
+	--label-tracking: 0.12em;
+	--radius: 0rem;
+
+	--background: oklch(0.965 0.004 90);
+	--foreground: oklch(0.16 0.005 90);
+	--card: oklch(0.99 0.003 90);
+	--card-foreground: var(--foreground);
+	--popover: oklch(0.99 0.003 90);
+	--popover-foreground: var(--foreground);
+	--primary: oklch(0.16 0.005 90);
+	--primary-foreground: oklch(0.98 0.003 90);
+	--secondary: oklch(0.92 0.004 90);
+	--secondary-foreground: var(--foreground);
+	--muted: oklch(0.93 0.004 90);
+	--muted-foreground: oklch(0.45 0.006 90);
+	--accent: oklch(0.91 0.005 90);
+	--accent-foreground: var(--foreground);
+	--destructive: oklch(0.52 0.2 27);
+	--border: oklch(0.86 0.004 90);
+	--input: oklch(0.78 0.005 90);
+	--ring: oklch(0.16 0.005 90);
+	--highlight: oklch(0.87 0.17 95);
+	--highlight-foreground: oklch(0.16 0.01 90);
+	--poster-shadow: none;
+}
+[data-theme='posters'].dark {
+	--background: oklch(0.13 0.004 90);
+	--foreground: oklch(0.95 0.004 90);
+	--card: oklch(0.18 0.004 90);
+	--popover: oklch(0.2 0.004 90);
+	--primary: oklch(0.87 0.17 95);
+	--primary-foreground: oklch(0.15 0.01 90);
+	--secondary: oklch(0.22 0.004 90);
+	--muted: oklch(0.2 0.004 90);
+	--muted-foreground: oklch(0.7 0.006 90);
+	--accent: oklch(0.24 0.004 90);
+	--destructive: oklch(0.68 0.18 27);
+	--border: oklch(0.28 0.004 90);
+	--input: oklch(0.35 0.004 90);
+	--ring: oklch(0.87 0.17 95);
+}
+
+/* ---- Collector's catalogue: white, black, spine green, numbered ----------- */
+[data-theme='catalogue'] {
+	--font-display-face: 'Newsreader Variable', Georgia, serif;
+	--font-body-face: 'IBM Plex Sans Variable', system-ui, sans-serif;
+	--font-mono-face: 'IBM Plex Mono', ui-monospace, monospace;
+	--display-weight: 500;
+	--display-style: normal;
+	--display-case: none;
+	--display-tracking: -0.01em;
+	--display-scale: 1;
+	--label-tracking: 0.1em;
+	--radius: 0.125rem;
+
+	--background: oklch(0.985 0.002 165);
+	--foreground: oklch(0.18 0.01 165);
+	--card: oklch(0.995 0.001 165);
+	--card-foreground: var(--foreground);
+	--popover: oklch(0.995 0.001 165);
+	--popover-foreground: var(--foreground);
+	--primary: oklch(0.42 0.07 165);
+	--primary-foreground: oklch(0.99 0.002 165);
+	--secondary: oklch(0.95 0.006 165);
+	--secondary-foreground: var(--foreground);
+	--muted: oklch(0.955 0.005 165);
+	--muted-foreground: oklch(0.47 0.012 165);
+	--accent: oklch(0.94 0.01 165);
+	--accent-foreground: var(--foreground);
+	--destructive: oklch(0.52 0.19 27);
+	--border: oklch(0.88 0.006 165);
+	--input: oklch(0.8 0.008 165);
+	--ring: oklch(0.42 0.07 165);
+	--highlight: oklch(0.42 0.07 165);
+	--highlight-foreground: oklch(0.99 0.002 165);
+	--poster-shadow: none;
+}
+[data-theme='catalogue'].dark {
+	--background: oklch(0.17 0.008 165);
+	--foreground: oklch(0.93 0.006 165);
+	--card: oklch(0.2 0.009 165);
+	--popover: oklch(0.22 0.01 165);
+	--primary: oklch(0.76 0.09 165);
+	--primary-foreground: oklch(0.17 0.02 165);
+	--secondary: oklch(0.24 0.01 165);
+	--muted: oklch(0.23 0.01 165);
+	--muted-foreground: oklch(0.7 0.015 165);
+	--accent: oklch(0.26 0.012 165);
+	--destructive: oklch(0.68 0.17 27);
+	--border: oklch(0.31 0.012 165);
+	--input: oklch(0.38 0.012 165);
+	--ring: oklch(0.76 0.09 165);
+	--highlight: oklch(0.76 0.09 165);
+	--highlight-foreground: oklch(0.17 0.02 165);
+}
+
+@theme inline {
+	--font-sans: var(--font-body-face);
+	--font-display: var(--font-display-face);
+	--font-mono: var(--font-mono-face);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--color-foreground: var(--foreground);
+	--color-background: var(--background);
+	--color-highlight: var(--highlight);
+	--color-highlight-foreground: var(--highlight-foreground);
+	--radius-sm: calc(var(--radius) * 0.6);
+	--radius-md: calc(var(--radius) * 0.8);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) * 1.4);
+	--radius-2xl: calc(var(--radius) * 1.8);
+	--radius-3xl: calc(var(--radius) * 2.2);
+	--radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	html {
+		@apply font-sans;
+		-webkit-text-size-adjust: 100%;
+		color-scheme: light;
+	}
+	html.dark {
+		color-scheme: dark;
+	}
+	body {
+		@apply bg-background text-foreground antialiased;
+		font-optical-sizing: auto;
+		transition:
+			background-color 200ms ease,
+			color 200ms ease;
+	}
+	::selection {
+		background: var(--highlight);
+		color: var(--highlight-foreground);
+	}
+	:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			transition-duration: 0ms !important;
+			animation-duration: 0ms !important;
+		}
+	}
+}
+
+@layer components {
+	/* The voice of each theme. */
+	.display {
+		font-family: var(--font-display-face);
+		font-weight: var(--display-weight);
+		font-style: var(--display-style);
+		text-transform: var(--display-case);
+		letter-spacing: var(--display-tracking);
+		line-height: 1.05;
+	}
+	/* Small tracked capitals for section labels. */
+	.label {
+		font-family: var(--font-body-face);
+		font-size: 0.6875rem;
+		font-weight: 600;
+		letter-spacing: var(--label-tracking);
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+	}
+	.figures {
+		font-variant-numeric: tabular-nums lining-nums;
+	}
+	.poster-img {
+		box-shadow: var(--poster-shadow);
+	}
+	/* Programme: perforated rule between rows, like a ticket stub. */
+	.perforated {
+		background-image: linear-gradient(to right, var(--border) 50%, transparent 0%);
+		background-size: 8px 1px;
+		background-repeat: repeat-x;
+		background-position: bottom;
+	}
+}
