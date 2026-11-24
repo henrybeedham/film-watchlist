@@ -15,6 +15,7 @@ import {
 	type WatchLog
 } from './items';
 import { kickEnrichment } from './enrich';
+import { ensureDetails } from './tmdb';
 import { setPrefs } from './prefs';
 import { titleKey } from '#lib/notes-parser.js';
 import { parseLine } from '#lib/notes-parser.js';
@@ -74,7 +75,10 @@ export const itemActions = {
 				tmdb: picked ? { mediaType, tmdbId } : null
 			}
 		]);
-		kickEnrichment();
+		// A picked result is stored as matched, so the background matcher skips it.
+		// Fetch its details now so the poster is there when the list reloads.
+		if (picked) await ensureDetails(mediaType, tmdbId);
+		else kickEnrichment();
 		return { added: true, title: picked ? typed : parsed.title };
 	},
 
