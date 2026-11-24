@@ -28,7 +28,11 @@
 			<h1 class="display text-3xl">Create an account</h1>
 			{#if data.invite}
 				<p class="mt-2 text-muted-foreground">
-					{data.invite.invitedBy} has invited you to the list “{data.invite.listName}”.
+					{#if data.invite.listName}
+						{data.invite.invitedBy} has invited you to the list “{data.invite.listName}”.
+					{:else}
+						{data.invite.invitedBy} has invited you to Watchlist. You’ll start with a list of your own.
+					{/if}
 				</p>
 			{:else}
 				<p class="mt-2 text-muted-foreground">

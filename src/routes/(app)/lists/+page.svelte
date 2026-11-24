@@ -6,6 +6,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { longDate } from '#lib/format.js';
+	import type { SubmitFunction } from '$app/forms';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -24,6 +25,14 @@
 		() =>
 		async ({ update }: { update: (o?: { reset?: boolean }) => Promise<void> }) =>
 			await update({ reset: false });
+
+	const copyInvite: SubmitFunction<{ invite?: string }> =
+		() =>
+		async ({ result, update }) => {
+			const invite = result.type === 'success' ? result.data?.invite : undefined;
+			if (invite) await copy(`${data.origin}/invite/${invite}`, 'Invite link');
+			await update();
+		};
 
 	const shareUrl = $derived(m?.shareToken ? `${data.origin}/s/${m.shareToken}` : '');
 </script>
@@ -58,6 +67,41 @@
 			</div>
 			{#if form?.createMessage}<p class="text-sm text-destructive">{form.createMessage}</p>{/if}
 		</form>
+
+		<section class="mt-10">
+			<h2 class="label mb-1">Invite someone to Watchlist</h2>
+			<p class="mb-3 text-sm text-muted-foreground">
+				A link that lets one person make an account with a list of their own, without joining any of
+				yours. Works once and lasts seven days.
+			</p>
+			<form method="POST" action="?/siteInvite" use:enhance={copyInvite}>
+				<Button type="submit" variant="outline">Create and copy a link</Button>
+			</form>
+			{#if data.siteInvites.length}
+				<ul class="mt-4 divide-y border-y text-sm">
+					{#each data.siteInvites as inv (inv.token)}
+						<li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+							<button
+								class="inline-flex min-w-0 items-center gap-1.5 font-mono text-xs hover:text-foreground"
+								onclick={() => copy(`${data.origin}/invite/${inv.token}`, 'Invite link')}
+								title="Copy"
+							>
+								<Copy class="size-3.5 shrink-0" strokeWidth={1.5} />
+								<span class="truncate">/invite/{inv.token.slice(0, 8)}…</span>
+							</button>
+							<form method="POST" action="?/revokeSiteInvite" use:enhance={quiet} class="ml-auto">
+								<input type="hidden" name="token" value={inv.token} />
+								<button
+									class="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+								>
+									Cancel
+								</button>
+							</form>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</section>
 	</aside>
 
 	{#if m}
@@ -121,18 +165,7 @@
 						An invite link lets one person create an account (or use their existing one) and join
 						this list. Each link works once and lasts seven days.
 					</p>
-					<form
-						method="POST"
-						action="?/invite"
-						use:enhance={() =>
-							async ({ result, update }) => {
-								const invite = result.type === 'success' ? result.data?.invite : null;
-								if (typeof invite === 'string') {
-									await copy(`${data.origin}/invite/${invite}`, 'Invite link');
-								}
-								await update();
-							}}
-					>
+					<form method="POST" action="?/invite" use:enhance={copyInvite}>
 						<input type="hidden" name="listId" value={m.id} />
 						<Button type="submit" variant="outline">Create and copy an invite link</Button>
 					</form>

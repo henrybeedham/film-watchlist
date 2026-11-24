@@ -71,8 +71,8 @@ export const actions: Actions = {
 		}
 
 		if (invite) {
-			const listId = useInvite(token, userId);
-			if (!listId) {
+			const used = useInvite(token, userId);
+			if (!used) {
 				// Someone else used the invite while this account was being created: one invite,
 				// one account. Remove the account again (its session and login go with it).
 				run('DELETE FROM "user" WHERE id = ?', userId);
@@ -81,6 +81,8 @@ export const actions: Actions = {
 					message: 'That invite link has expired or been used. Ask for a new one.'
 				});
 			}
+			// A site invite comes without a list, so they start with one of their own.
+			const listId = used.listId ?? createList(userId, 'Films to watch');
 			setPrefs(userId, { currentListId: listId });
 		} else {
 			clearSetupCode();

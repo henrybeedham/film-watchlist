@@ -101,7 +101,8 @@ export function addMember(listId: number, userId: string) {
 
 // ---- Invites ---------------------------------------------------------------
 
-export function createInvite(listId: number, userId: string) {
+/** An invite to a list, or with `listId` null, just to the site. */
+export function createInvite(listId: number | null, userId: string) {
 	const t = token();
 	const expires = new Date(Date.now() + INVITE_DAYS * 864e5).toISOString();
 	run(
@@ -111,8 +112,15 @@ export function createInvite(listId: number, userId: string) {
 	return t;
 }
 
+interface OpenInvite {
+	token: string;
+	createdAt: string;
+	expiresAt: string;
+	createdBy: string;
+}
+
 export function openInvites(listId: number) {
-	return all<{ token: string; createdAt: string; expiresAt: string; createdBy: string }>(
+	return all<OpenInvite>(
 		`SELECT i.token, i.created_at AS createdAt, i.expires_at AS expiresAt, u.name AS createdBy
 		 FROM invites i JOIN "user" u ON u.id = i.created_by
 		 WHERE i.list_id = ? AND i.used_at IS NULL AND i.expires_at > ?
@@ -121,27 +129,43 @@ export function openInvites(listId: number) {
 	);
 }
 
+/** Someone's open invites to the site that don't come with a list. */
+export function openSiteInvites(userId: string) {
+	return all<OpenInvite>(
+		`SELECT i.token, i.created_at AS createdAt, i.expires_at AS expiresAt, u.name AS createdBy
+		 FROM invites i JOIN "user" u ON u.id = i.created_by
+		 WHERE i.list_id IS NULL AND i.created_by = ? AND i.used_at IS NULL AND i.expires_at > ?
+		 ORDER BY i.created_at DESC`,
+		[userId, now()]
+	);
+}
+
 export function revokeInvite(listId: number, t: string) {
 	run('DELETE FROM invites WHERE token = ? AND list_id = ?', [t, listId]);
 }
 
-/** A valid, unused invite and the list it's for. */
+export function revokeSiteInvite(userId: string, t: string) {
+	run('DELETE FROM invites WHERE token = ? AND list_id IS NULL AND created_by = ?', [t, userId]);
+}
+
+/** A valid, unused invite and the list it's for (null for a site-only invite). */
 export function findInvite(t: string) {
-	return get<{ token: string; listId: number; listName: string; invitedBy: string }>(
+	return get<{ token: string; listId: number | null; listName: string | null; invitedBy: string }>(
 		`SELECT i.token, i.list_id AS listId, l.name AS listName, u.name AS invitedBy
-		 FROM invites i JOIN lists l ON l.id = i.list_id JOIN "user" u ON u.id = i.created_by
+		 FROM invites i LEFT JOIN lists l ON l.id = i.list_id JOIN "user" u ON u.id = i.created_by
 		 WHERE i.token = ? AND i.used_at IS NULL AND i.expires_at > ?`,
 		[t, now()]
 	);
 }
 
-export function useInvite(t: string, userId: string) {
+/** Uses up the invite; false if it's gone, otherwise the list joined (null for a site invite). */
+export function useInvite(t: string, userId: string): false | { listId: number | null } {
 	return transaction(() => {
 		const invite = findInvite(t);
-		if (!invite) return null;
-		addMember(invite.listId, userId);
+		if (!invite) return false;
+		if (invite.listId !== null) addMember(invite.listId, userId);
 		run('UPDATE invites SET used_at = ?, used_by = ? WHERE token = ?', [now(), userId, t]);
-		return invite.listId;
+		return { listId: invite.listId };
 	});
 }
 

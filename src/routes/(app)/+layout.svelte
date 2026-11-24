@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { postAction } from '#lib/client/actions.js';
 	import Wordmark from '#lib/components/Wordmark.svelte';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -20,8 +22,14 @@
 	const active = (href: string) =>
 		href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
 
-	let switchForm: HTMLFormElement | undefined = $state();
-	let switchTo = $state('');
+	// Switch list but stay on the same section. A title page belongs to one list, and the Lists
+	// page shows whichever list is in its URL, so those two move to the new list's equivalent.
+	async function switchList(id: number) {
+		await postAction('/lists?/switch', { listId: id });
+		const path = page.url.pathname;
+		if (path.startsWith('/lists')) await goto(`/lists?list=${id}`, { refreshAll: true });
+		else if (path.startsWith('/item/')) await goto('/', { refreshAll: true });
+	}
 </script>
 
 <div class="flex min-h-dvh flex-col">
@@ -32,17 +40,7 @@
 			</a>
 
 			{#if data.currentList}
-				<form
-					method="POST"
-					action="/lists?/switch"
-					bind:this={switchForm}
-					use:enhance={() =>
-						async ({ update }) => {
-							await update({ invalidateAll: true });
-						}}
-					class="ml-1 min-w-0"
-				>
-					<input type="hidden" name="listId" value={switchTo} />
+				<div class="ml-1 min-w-0">
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
 							class="flex max-w-[11rem] min-w-0 items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground sm:max-w-xs"
@@ -53,12 +51,7 @@
 						<DropdownMenu.Content align="start" class="min-w-56">
 							<DropdownMenu.Label class="label">Your lists</DropdownMenu.Label>
 							{#each data.lists as list (list.id)}
-								<DropdownMenu.Item
-									onSelect={() => {
-										switchTo = String(list.id);
-										queueMicrotask(() => switchForm?.requestSubmit());
-									}}
-								>
+								<DropdownMenu.Item onSelect={() => switchList(list.id)}>
 									<span class="flex-1 truncate">{list.name}</span>
 									<span class="figures text-xs text-muted-foreground">{list.wantCount}</span>
 									{#if list.id === data.currentList.id}<Check
@@ -73,7 +66,7 @@
 							</DropdownMenu.Item>
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
-				</form>
+				</div>
 			{/if}
 
 			<div class="ml-auto flex items-center gap-1">

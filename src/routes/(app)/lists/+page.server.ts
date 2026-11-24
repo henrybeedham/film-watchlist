@@ -8,11 +8,13 @@ import {
 	getList,
 	members,
 	openInvites,
+	openSiteInvites,
 	removeMember,
 	renameList,
 	requireMember,
 	requireOwner,
 	revokeInvite,
+	revokeSiteInvite,
 	setShareToken
 } from '#lib/server/lists.js';
 import { setPrefs } from '#lib/server/prefs.js';
@@ -21,7 +23,8 @@ import { text } from '#lib/server/form.js';
 export const load: PageServerLoad = ({ locals, url }) => {
 	const { user, lists, listId } = appContext(locals, url);
 	const chosen = Number(url.searchParams.get('list')) || listId;
-	if (!chosen) return { manage: null, origin: url.origin };
+	const siteInvites = openSiteInvites(user.id);
+	if (!chosen) return { manage: null, origin: url.origin, lists, siteInvites };
 	const role = requireMember(chosen, user.id);
 	const list = getList(chosen)!;
 	return {
@@ -35,7 +38,8 @@ export const load: PageServerLoad = ({ locals, url }) => {
 			members: members(list.id),
 			invites: role === 'owner' ? openInvites(list.id) : []
 		},
-		lists
+		lists,
+		siteInvites
 	};
 };
 
@@ -85,6 +89,17 @@ export const actions: Actions = {
 		const id = listIdFrom(f);
 		requireOwner(id, user.id);
 		revokeInvite(id, text(f, 'token'));
+		return { revoked: true };
+	},
+
+	siteInvite: ({ locals }) => {
+		const { user } = appContext(locals);
+		return { invite: createInvite(null, user.id) };
+	},
+
+	revokeSiteInvite: async ({ locals, request }) => {
+		const { user } = appContext(locals);
+		revokeSiteInvite(user.id, text(await request.formData(), 'token'));
 		return { revoked: true };
 	},
 

@@ -19,14 +19,22 @@
 	{:else}
 		<p class="label">An invitation</p>
 		<h1 class="display text-4xl">
-			{data.invite.invitedBy} has invited you to “{data.invite.listName}”
+			{data.invite.invitedBy} has invited you to {data.invite.listName
+				? `“${data.invite.listName}”`
+				: 'Watchlist'}
 		</h1>
 		<p class="text-muted-foreground">
-			You’ll be able to add titles, tick them off and rate what you’ve watched.
+			{data.invite.listName
+				? 'You’ll be able to add titles, tick them off and rate what you’ve watched.'
+				: 'Make an account to keep your own lists of films and series to watch, and share them with others.'}
 		</p>
 		{#if data.already}
-			<p>You’re already on this list.</p>
-			<Button href="/" class="justify-self-start">Open it</Button>
+			<p>
+				{data.invite.listName ? 'You’re already on this list.' : 'You already have an account.'}
+			</p>
+			<Button href="/" class="justify-self-start">
+				{data.invite.listName ? 'Open it' : 'Go to Watchlist'}
+			</Button>
 		{:else if data.user}
 			<form method="POST">
 				<Button type="submit" size="lg">Join as {data.user.name}</Button>

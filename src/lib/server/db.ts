@@ -146,6 +146,21 @@ const MIGRATIONS: (string | ((db: DatabaseSync) => void))[] = [
 		current_list_id INTEGER REFERENCES lists (id) ON DELETE SET NULL,
 		services TEXT NOT NULL DEFAULT '[]'
 	);
+	`,
+	// 3: invites to the site without a list (list_id becomes nullable)
+	`
+	CREATE TABLE invites_new (
+		token TEXT PRIMARY KEY,
+		list_id INTEGER REFERENCES lists (id) ON DELETE CASCADE,
+		created_by TEXT NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
+		created_at TEXT NOT NULL,
+		expires_at TEXT NOT NULL,
+		used_at TEXT,
+		used_by TEXT REFERENCES "user" (id) ON DELETE SET NULL
+	);
+	INSERT INTO invites_new SELECT token, list_id, created_by, created_at, expires_at, used_at, used_by FROM invites;
+	DROP TABLE invites;
+	ALTER TABLE invites_new RENAME TO invites;
 	`
 	// add new migrations here
 ];
