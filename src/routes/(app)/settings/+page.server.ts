@@ -3,6 +3,7 @@ import { APIError } from 'better-auth/api';
 import type { Actions, PageServerLoad } from './$types';
 import { appContext } from '#lib/server/context.js';
 import { setPrefs } from '#lib/server/prefs.js';
+import { isSiteAdmin, setSiteTheme, siteTheme } from '#lib/server/site.js';
 import { regionProviderCatalogue } from '#lib/server/tmdb.js';
 import { auth } from '#lib/server/auth.js';
 import { isMode, isTheme } from '#lib/themes.js';
@@ -10,8 +11,14 @@ import { text } from '#lib/server/form.js';
 import { hit } from '#lib/server/rate-limit.js';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const { prefs } = appContext(locals, url);
-	return { catalogue: await regionProviderCatalogue(), mode: prefs.mode, theme: prefs.theme };
+	const { prefs, user } = appContext(locals, url);
+	return {
+		catalogue: await regionProviderCatalogue(),
+		mode: prefs.mode,
+		themeChoice: prefs.themeChoice,
+		siteTheme: siteTheme(),
+		admin: isSiteAdmin(user.id)
+	};
 };
 
 const YEAR = 60 * 60 * 24 * 365;
@@ -22,16 +29,28 @@ export const actions: Actions = {
 		const f = await request.formData();
 		const theme = f.get('theme');
 		const mode = f.get('mode');
+		// A new theme brings its own default view.
 		if (isTheme(theme)) {
-			// A new theme brings its own default view.
 			setPrefs(user.id, { theme, view: null });
 			cookies.set('theme', theme, { path: '/', maxAge: YEAR, httpOnly: false, sameSite: 'lax' });
+		} else if (theme === 'site') {
+			setPrefs(user.id, { theme: null, view: null });
+			cookies.delete('theme', { path: '/' });
 		}
 		if (isMode(mode)) {
 			setPrefs(user.id, { mode });
 			cookies.set('mode', mode, { path: '/', maxAge: YEAR, httpOnly: false, sameSite: 'lax' });
 		}
 		return { ok: true };
+	},
+
+	siteTheme: async ({ request, locals }) => {
+		const { user } = appContext(locals);
+		if (!isSiteAdmin(user.id)) return fail(403, { siteThemeMessage: 'Only the site’s admin can.' });
+		const theme = (await request.formData()).get('siteTheme');
+		if (!isTheme(theme)) return fail(400, { siteThemeMessage: 'Pick a theme.' });
+		setSiteTheme(theme);
+		return { siteThemeSaved: true };
 	},
 
 	services: async ({ request, locals }) => {

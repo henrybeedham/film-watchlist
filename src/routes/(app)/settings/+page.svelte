@@ -11,6 +11,7 @@
 	let { data, form }: PageProps = $props();
 
 	let appearanceForm: HTMLFormElement | undefined = $state();
+	let siteForm: HTMLFormElement | undefined = $state();
 	let selectedServices = $derived(new Set(data.services));
 
 	// Previews follow the light/dark mode currently showing.
@@ -23,6 +24,24 @@
 		obs.observe(root, { attributes: true, attributeFilter: ['class'] });
 		return () => obs.disconnect();
 	});
+
+	const siteName = $derived(THEMES.find((t) => t.id === data.siteTheme)?.name ?? '');
+	const themeOptions = $derived([
+		{
+			value: 'site',
+			id: data.siteTheme,
+			name: 'Site default',
+			blurb: `Currently ${siteName}. Follows the site if its default changes.`,
+			checked: data.themeChoice === null
+		},
+		...THEMES.map((t) => ({
+			value: t.id,
+			id: t.id,
+			name: t.name,
+			blurb: t.blurb,
+			checked: data.themeChoice === t.id
+		}))
+	]);
 
 	const quiet =
 		() =>
@@ -38,14 +57,14 @@
 	<section class="mb-12">
 		<h2 class="label mb-1">Theme</h2>
 		<p class="mb-4 text-sm text-muted-foreground">Only changes how it looks for you.</p>
-		<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-			{#each THEMES as t (t.id)}
+		<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+			{#each themeOptions as t (t.value)}
 				<label class="group cursor-pointer">
 					<input
 						type="radio"
 						name="theme"
-						value={t.id}
-						checked={data.theme === t.id}
+						value={t.value}
+						checked={t.checked}
 						class="peer sr-only"
 						onchange={() => appearanceForm?.requestSubmit()}
 					/>
@@ -102,6 +121,38 @@
 		</div>
 	</section>
 </form>
+
+{#if data.admin}
+	<form method="POST" action="?/siteTheme" bind:this={siteForm} use:enhance={quiet}>
+		<section class="mb-12">
+			<h2 class="label mb-1">Site default theme</h2>
+			<p class="mb-3 text-sm text-muted-foreground">
+				What everyone sees unless they pick their own theme, including on sign-in pages. Only you
+				can change this, as the site’s first account.
+			</p>
+			<div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Site default theme">
+				{#each THEMES as t (t.id)}
+					<label
+						class="flex h-9 cursor-pointer items-center rounded-md border px-3 text-sm has-checked:border-primary has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:ring-2 has-focus-visible:ring-[var(--ring)]"
+					>
+						<input
+							type="radio"
+							name="siteTheme"
+							value={t.id}
+							checked={data.siteTheme === t.id}
+							class="sr-only"
+							onchange={() => siteForm?.requestSubmit()}
+						/>
+						{t.name}
+					</label>
+				{/each}
+			</div>
+			{#if form?.siteThemeMessage}<p class="mt-2 text-sm text-destructive">
+					{form.siteThemeMessage}
+				</p>{/if}
+		</section>
+	</form>
+{/if}
 
 {#if data.tmdbEnabled}
 	<section class="mb-12">

@@ -1,11 +1,10 @@
 import type { Handle } from '@sveltejs/kit/hooks';
 import { building } from '$app/env';
 import { auth } from '#lib/server/auth.js';
-import { getPrefs } from '#lib/server/prefs.js';
+import { pageAppearance } from '#lib/server/prefs.js';
 import { startEnrichment } from '#lib/server/enrich.js';
 import { announceSetupCode } from '#lib/server/setup.js';
 import { PUBLIC_URL } from '#lib/server/config.js';
-import { isMode, isTheme } from '#lib/themes.js';
 
 if (!building) {
 	startEnrichment();
@@ -49,14 +48,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		// Theme and light/dark are rendered on the server so there's no flash.
 		// A page's load can set locals.themeOverride (the public share page does).
 		transformPageChunk: ({ html }) => {
-			const prefs = event.locals.user ? getPrefs(event.locals.user.id) : null;
-			const cookieTheme = event.cookies.get('theme');
-			const cookieMode = event.cookies.get('mode');
-			const theme =
-				event.locals.themeOverride ??
-				prefs?.theme ??
-				(isTheme(cookieTheme) ? cookieTheme : 'programme');
-			const mode = prefs?.mode ?? (isMode(cookieMode) ? cookieMode : 'system');
+			const { theme, mode } = pageAppearance(event.locals, event.cookies);
 			return html
 				.replace('%app.theme%', theme)
 				.replace('%app.mode%', mode)

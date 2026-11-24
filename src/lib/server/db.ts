@@ -161,6 +161,22 @@ const MIGRATIONS: (string | ((db: DatabaseSync) => void))[] = [
 	INSERT INTO invites_new SELECT token, list_id, created_by, created_at, expires_at, used_at, used_by FROM invites;
 	DROP TABLE invites;
 	ALTER TABLE invites_new RENAME TO invites;
+	`,
+	// 4: a person's theme can be unset, meaning "use the site's default theme". Anyone still on the
+	// original default never picked one, so they follow the site default from now on.
+	`
+	CREATE TABLE prefs_new (
+		user_id TEXT PRIMARY KEY REFERENCES "user" (id) ON DELETE CASCADE,
+		theme TEXT,
+		mode TEXT NOT NULL DEFAULT 'system',
+		view TEXT,
+		current_list_id INTEGER REFERENCES lists (id) ON DELETE SET NULL,
+		services TEXT NOT NULL DEFAULT '[]'
+	);
+	INSERT INTO prefs_new SELECT user_id, NULLIF(theme, 'programme'), mode, view, current_list_id, services
+		FROM prefs;
+	DROP TABLE prefs;
+	ALTER TABLE prefs_new RENAME TO prefs;
 	`
 	// add new migrations here
 ];

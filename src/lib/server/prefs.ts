@@ -1,10 +1,15 @@
 // Per-person settings: theme, light/dark, list view, current list and streaming services.
 import { get, run } from './db';
 import { userLists } from './lists';
+import { siteTheme } from './site';
+import type { Cookies } from '@sveltejs/kit';
 import { defaultView, isMode, isTheme, type Mode, type ThemeId, type View } from '#lib/themes.js';
 
 export interface Prefs {
+	/** The theme in use: their own choice, or the site's default. */
 	theme: ThemeId;
+	/** Their own choice; null follows the site's default. */
+	themeChoice: ThemeId | null;
 	mode: Mode;
 	view: View;
 	currentListId: number | null;
@@ -12,7 +17,7 @@ export interface Prefs {
 }
 
 interface PrefsRow {
-	theme: string;
+	theme: string | null;
 	mode: string;
 	view: string | null;
 	current_list_id: number | null;
@@ -21,9 +26,11 @@ interface PrefsRow {
 
 export function getPrefs(userId: string): Prefs {
 	const row = get<PrefsRow>('SELECT * FROM prefs WHERE user_id = ?', userId);
-	const theme = isTheme(row?.theme) ? row.theme : 'programme';
+	const themeChoice = isTheme(row?.theme) ? row.theme : null;
+	const theme = themeChoice ?? siteTheme();
 	return {
 		theme,
+		themeChoice,
 		mode: isMode(row?.mode) ? row.mode : 'system',
 		view: row?.view === 'rows' || row?.view === 'grid' ? row.view : defaultView(theme),
 		currentListId: row?.current_list_id ?? null,
@@ -34,7 +41,7 @@ export function getPrefs(userId: string): Prefs {
 }
 
 type Patch = Partial<{
-	theme: ThemeId;
+	theme: ThemeId | null;
 	mode: Mode;
 	view: View | null;
 	currentListId: number | null;
@@ -63,4 +70,22 @@ export function currentListId(userId: string, prefs: Prefs): number | null {
 		return prefs.currentListId;
 	}
 	return lists[0]?.id ?? null;
+}
+
+/**
+ * The theme and light/dark mode a page renders with. Signed out, the cookies remember what this
+ * browser last chose; otherwise it's the site's default theme.
+ */
+export function pageAppearance(
+	locals: App.Locals,
+	cookies: Cookies
+): { theme: ThemeId; mode: Mode } {
+	const prefs = locals.user ? getPrefs(locals.user.id) : null;
+	const cookieTheme = cookies.get('theme');
+	const cookieMode = cookies.get('mode');
+	return {
+		theme:
+			locals.themeOverride ?? prefs?.theme ?? (isTheme(cookieTheme) ? cookieTheme : siteTheme()),
+		mode: prefs?.mode ?? (isMode(cookieMode) ? cookieMode : 'system')
+	};
 }
