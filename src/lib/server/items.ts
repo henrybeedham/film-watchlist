@@ -128,13 +128,33 @@ function diaryFor(itemIds: number[]): Map<number, DiaryEntry[]> {
 	return map;
 }
 
-export function listItems(listId: number, status?: 'want' | 'watched'): Item[] {
+/**
+ * Lists only show the poster, a few facts and where to stream, so by default the overview and
+ * the rent/buy/free providers are left out: they made up most of each page's data. `full` keeps them.
+ */
+export function listItems(listId: number, status?: 'want' | 'watched', full = false): Item[] {
 	const rows = all<ItemRow>(
 		`${SELECT} WHERE i.list_id = ? ${status ? 'AND i.status = ?' : ''} ORDER BY i.created_at DESC, i.id DESC`,
 		status ? [listId, status] : [listId]
 	);
 	const diary = diaryFor(rows.map((r) => r.id));
-	return rows.map((r) => toItem(r, diary.get(r.id) ?? []));
+	const items = rows.map((r) => toItem(r, diary.get(r.id) ?? []));
+	return full ? items : items.map(lite);
+}
+
+function lite(item: Item): Item {
+	const d = item.details;
+	if (!d) return item;
+	const p = d.providers;
+	return {
+		...item,
+		details: {
+			...d,
+			overview: null,
+			backdropPath: null,
+			providers: p ? { link: null, stream: p.stream, free: [], rent: [], buy: [] } : null
+		}
+	};
 }
 
 export function getItem(id: number): Item | undefined {

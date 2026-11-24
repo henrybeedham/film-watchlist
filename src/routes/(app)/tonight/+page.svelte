@@ -136,7 +136,13 @@
 			aria-live="polite"
 		>
 			<a href="/item/{pick.id}" class="w-40 sm:w-full" tabindex="-1" aria-hidden="true">
-				<Poster path={d?.posterPath} title={pick.displayTitle} size="w500" class="w-full" />
+				<Poster
+					path={d?.posterPath}
+					title={pick.displayTitle}
+					size="w500"
+					placeholder={data.view === 'grid' ? 'w342' : 'w185'}
+					class="w-full"
+				/>
 			</a>
 			<div class="min-w-0">
 				<p class="label">Tonight’s feature</p>

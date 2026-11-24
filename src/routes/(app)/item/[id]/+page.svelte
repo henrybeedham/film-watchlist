@@ -62,7 +62,13 @@
 	class="grid gap-6 sm:grid-cols-[minmax(0,13rem)_1fr] sm:gap-10 lg:grid-cols-[minmax(0,16rem)_1fr]"
 >
 	<div class="w-36 sm:w-full">
-		<Poster path={d?.posterPath} title={item.displayTitle} size="w500" class="w-full" />
+		<Poster
+			path={d?.posterPath}
+			title={item.displayTitle}
+			size="w500"
+			placeholder={data.view === 'grid' ? 'w342' : 'w185'}
+			class="w-full"
+		/>
 	</div>
 
 	<div class="min-w-0">

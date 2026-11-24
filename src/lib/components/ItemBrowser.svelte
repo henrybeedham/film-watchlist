@@ -22,6 +22,8 @@
 	import ItemTile from './ItemTile.svelte';
 	import WatchedDialog from './WatchedDialog.svelte';
 	import { titleKey } from '#lib/notes-parser.js';
+	import { logo, poster } from '#lib/format.js';
+	import { warmImages } from '#lib/client/warm.js';
 	import type { Item } from '#lib/types.js';
 	import type { View } from '#lib/themes.js';
 
@@ -44,6 +46,9 @@
 		showServicesFilter?: boolean;
 		empty?: Snippet;
 	} = $props();
+
+	// About a screenful: these posters load first, the rest as they scroll into view.
+	const EAGER = 12;
 
 	let q = $state('');
 	let kind = $state<'all' | 'movie' | 'tv'>('all');
@@ -119,6 +124,22 @@
 			rating: (a, b) => topRating(b) - topRating(a)
 		};
 		return list.sort(by[sort]);
+	});
+
+	// Once the page is idle, have the service worker fetch every poster and logo on this list, so
+	// scrolling down and opening a title show them instantly.
+	$effect(() => {
+		const size = currentView === 'grid' ? 'w342' : 'w185';
+		const urls: string[] = [];
+		for (const i of items) {
+			const p = poster(i.details?.posterPath, size);
+			if (p) urls.push(p);
+			for (const pr of i.details?.providers?.stream ?? []) {
+				const l = logo(pr.logo);
+				if (l) urls.push(l);
+			}
+		}
+		return warmImages([...new Set(urls)]);
 	});
 
 	const filtered = $derived(q || kind !== 'all' || genre || onMine);
@@ -222,14 +243,22 @@
 		<ul
 			class="grid grid-cols-[repeat(auto-fill,minmax(7.25rem,1fr))] gap-x-3 gap-y-5 sm:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] sm:gap-x-4"
 		>
-			{#each shown as item (item.id)}
-				<ItemTile {item} {services} {readonly} onTick={tick} />
+			{#each shown as item, i (item.id)}
+				<ItemTile {item} {services} {readonly} eager={i < EAGER} onTick={tick} />
 			{/each}
 		</ul>
 	{:else}
 		<ul class="border-t programme:border-t-0 screening:border-t-0">
 			{#each shown as item, i (item.id)}
-				<ItemRow {item} number={i + 1} {services} {readonly} {pendingLabel} onTick={tick} />
+				<ItemRow
+					{item}
+					number={i + 1}
+					{services}
+					{readonly}
+					{pendingLabel}
+					eager={i < EAGER}
+					onTick={tick}
+				/>
 			{/each}
 		</ul>
 	{/if}

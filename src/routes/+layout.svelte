@@ -1,6 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import { Toaster } from '#lib/components/ui/sonner/index.js';
+	import { THEME_FONTS } from '#lib/fonts.js';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
@@ -24,6 +25,9 @@
 
 <svelte:head>
 	<title>Watchlist</title>
+	{#each THEME_FONTS[data.theme] ?? [] as href (href)}
+		<link rel="preload" as="font" type="font/woff2" {href} crossorigin="anonymous" />
+	{/each}
 </svelte:head>
 
 {@render children()}

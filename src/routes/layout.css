@@ -344,3 +344,13 @@
 		background-position: bottom;
 	}
 }
+
+/* Long lists: the browser skips laying out and painting entries until they're near the screen. */
+@utility offscreen-lazy {
+	content-visibility: auto;
+	contain-intrinsic-size: auto 5rem;
+}
+@utility offscreen-lazy-tile {
+	content-visibility: auto;
+	contain-intrinsic-size: auto 18rem;
+}

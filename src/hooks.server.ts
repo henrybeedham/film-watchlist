@@ -67,5 +67,35 @@ export const handle: Handle = async ({ event, resolve }) => {
 	} catch {
 		// Some responses (e.g. from fetch) have immutable headers; leave them as they are.
 	}
-	return response;
+	return compress(event.request, response);
 };
+
+// Pages and their data are mostly repeated JSON keys and markup, and shrink 5–10× with gzip.
+// The Node adapter doesn't compress what the app renders (only its prebuilt files), so do it here.
+const COMPRESSIBLE = /^(text\/html|application\/json|text\/plain|image\/svg\+xml)\b/;
+
+function compress(request: Request, response: Response) {
+	const type = response.headers.get('content-type') ?? '';
+	const length = Number(response.headers.get('content-length') ?? Infinity);
+	if (
+		!response.body ||
+		request.method === 'HEAD' ||
+		response.status === 204 ||
+		response.status === 304 ||
+		response.headers.has('content-encoding') ||
+		!COMPRESSIBLE.test(type) ||
+		length < 1024 ||
+		!/\bgzip\b/.test(request.headers.get('accept-encoding') ?? '')
+	) {
+		return response;
+	}
+	const headers = new Headers(response.headers);
+	headers.set('content-encoding', 'gzip');
+	headers.delete('content-length');
+	headers.append('vary', 'accept-encoding');
+	return new Response(response.body.pipeThrough(new CompressionStream('gzip')), {
+		status: response.status,
+		statusText: response.statusText,
+		headers
+	});
+}

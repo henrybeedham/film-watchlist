@@ -8,12 +8,14 @@
 		item,
 		services = [],
 		onTick,
-		readonly = false
+		readonly = false,
+		eager = false
 	}: {
 		item: Item;
 		services?: string[];
 		onTick?: (item: Item) => void;
 		readonly?: boolean;
+		eager?: boolean;
 	} = $props();
 
 	const d = $derived(item.details);
@@ -23,7 +25,7 @@
 	);
 </script>
 
-<li class="group">
+<li class="group offscreen-lazy-tile">
 	<div class="relative">
 		<svelte:element
 			this={readonly ? 'div' : 'a'}
@@ -32,7 +34,7 @@
 			aria-hidden="true"
 			class="block"
 		>
-			<Poster path={d?.posterPath} title={item.displayTitle} size="w342" class="w-full" />
+			<Poster path={d?.posterPath} title={item.displayTitle} size="w342" {eager} class="w-full" />
 		</svelte:element>
 		{#if item.mentions > 1}
 			<span

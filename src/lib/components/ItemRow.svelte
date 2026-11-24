@@ -13,7 +13,8 @@
 		services = [],
 		pendingLabel = false,
 		onTick,
-		readonly = false
+		readonly = false,
+		eager = false
 	}: {
 		item: Item;
 		number: number;
@@ -21,6 +22,7 @@
 		pendingLabel?: boolean;
 		onTick?: (item: Item) => void;
 		readonly?: boolean;
+		eager?: boolean;
 	} = $props();
 
 	const d = $derived(item.details);
@@ -40,7 +42,7 @@
 </script>
 
 <li
-	class="programme:perforated flex items-center gap-3 py-3
+	class="programme:perforated flex items-center gap-3 py-3 offscreen-lazy
 		sm:gap-4
 		screening:border-b screening:border-border/60 screening:py-4
 		posters:border-b
@@ -61,6 +63,7 @@
 			path={d?.posterPath}
 			title={item.displayTitle}
 			size="w185"
+			{eager}
 			class="w-11 programme:w-11 screening:w-16 sm:screening:w-20 posters:w-12 catalogue:w-9"
 		/>
 	</svelte:element>

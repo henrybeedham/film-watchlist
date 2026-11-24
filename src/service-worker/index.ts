@@ -33,6 +33,8 @@ sw.addEventListener('activate', (event) => {
 				Promise.all(keys.filter((k) => k !== CACHE && k !== IMAGES).map((k) => caches.delete(k)))
 			)
 			.then(() => sw.clients.claim())
+			.then(() => caches.open(IMAGES))
+			.then(trimImages)
 	);
 });
 
@@ -56,11 +58,12 @@ async function cachedImage(href: string) {
 	const res = await fetch(href, { mode: 'cors', credentials: 'omit' });
 	if (res.ok) {
 		await cache.put(href, res.clone());
-		void trimImages(cache);
+		if (++added % 50 === 0) void trimImages(cache);
 	}
 	return res;
 }
 
+let added = 0;
 let trimming = false;
 async function trimImages(cache: Cache) {
 	if (trimming) return;
@@ -71,4 +74,35 @@ async function trimImages(cache: Cache) {
 	} finally {
 		trimming = false;
 	}
+}
+
+// The page sends the images on the list it's showing; fetch the ones not cached yet, a few at a
+// time so they never compete with what's on screen.
+let warmQueue: string[] = [];
+let warming: Promise<void> | null = null;
+
+sw.addEventListener('message', (event) => {
+	const data = event.data as { type?: string; urls?: unknown } | null;
+	if (data?.type !== 'warm' || !Array.isArray(data.urls)) return;
+	const urls = data.urls.filter(
+		(u): u is string => typeof u === 'string' && u.startsWith(`${IMAGE_ORIGIN}/t/p/`)
+	);
+	warmQueue = [...new Set([...urls, ...warmQueue])].slice(0, MAX_IMAGES);
+	warming ??= drainWarm().finally(() => (warming = null));
+	event.waitUntil(warming);
+});
+
+async function drainWarm() {
+	const cache = await caches.open(IMAGES);
+	const worker = async () => {
+		for (let href = warmQueue.shift(); href; href = warmQueue.shift()) {
+			if (await cache.match(href)) continue;
+			try {
+				await cachedImage(href);
+			} catch {
+				// Offline or TMDB hiccup: it'll be fetched when shown.
+			}
+		}
+	};
+	await Promise.all([worker(), worker(), worker(), worker()]);
 }

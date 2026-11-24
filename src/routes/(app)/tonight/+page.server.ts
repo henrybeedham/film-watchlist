@@ -6,7 +6,7 @@ import { itemActions } from '#lib/server/item-actions.js';
 export const load: PageServerLoad = ({ locals, url }) => {
 	const { listId } = appContext(locals, url);
 	if (listId === null) return { items: [] };
-	return { items: listItems(listId, 'want').filter((i) => !i.comingSoon) };
+	return { items: listItems(listId, 'want', true).filter((i) => !i.comingSoon) };
 };
 
 export const actions: Actions = itemActions;
