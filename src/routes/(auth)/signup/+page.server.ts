@@ -8,6 +8,7 @@ import { setPrefs } from '#lib/server/prefs.js';
 import { text } from '#lib/server/form.js';
 import { hit } from '#lib/server/rate-limit.js';
 import { checkSetupCode, clearSetupCode } from '#lib/server/setup.js';
+import { makeAdmin } from '#lib/server/site.js';
 
 export const load: PageServerLoad = ({ locals, url }) => {
 	const token = url.searchParams.get('invite') ?? '';
@@ -86,6 +87,7 @@ export const actions: Actions = {
 			setPrefs(userId, { currentListId: listId });
 		} else {
 			clearSetupCode();
+			makeAdmin(userId); // the first account runs the site
 			const listId = createList(userId, 'Films to watch');
 			setPrefs(userId, { currentListId: listId });
 		}

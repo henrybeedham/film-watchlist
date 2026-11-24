@@ -95,6 +95,16 @@
 					>
 						Settings
 					</a>
+					{#if data.admin}
+						<a
+							class="rounded-md px-2.5 py-1.5 hover:bg-accent {active('/admin')
+								? 'text-foreground'
+								: 'text-muted-foreground'}"
+							href="/admin"
+						>
+							Admin
+						</a>
+					{/if}
 				</nav>
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger
@@ -113,6 +123,11 @@
 						<DropdownMenu.Item onSelect={() => (location.href = '/settings')}>
 							Settings
 						</DropdownMenu.Item>
+						{#if data.admin}
+							<DropdownMenu.Item onSelect={() => (location.href = '/admin')}>
+								Admin
+							</DropdownMenu.Item>
+						{/if}
 					</DropdownMenu.Content>
 				</DropdownMenu.Root>
 			</div>

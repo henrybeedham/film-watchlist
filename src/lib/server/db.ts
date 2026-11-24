@@ -177,6 +177,15 @@ const MIGRATIONS: (string | ((db: DatabaseSync) => void))[] = [
 		FROM prefs;
 	DROP TABLE prefs;
 	ALTER TABLE prefs_new RENAME TO prefs;
+	`,
+	// 5: site admins. Until now the first account was the only admin; it stays one.
+	`
+	CREATE TABLE site_admins (
+		user_id TEXT PRIMARY KEY REFERENCES "user" (id) ON DELETE CASCADE,
+		added_at TEXT NOT NULL
+	);
+	INSERT INTO site_admins (user_id, added_at)
+		SELECT id, strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM "user" ORDER BY "createdAt", rowid LIMIT 1;
 	`
 	// add new migrations here
 ];

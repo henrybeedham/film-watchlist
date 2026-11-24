@@ -3,7 +3,7 @@ import { APIError } from 'better-auth/api';
 import type { Actions, PageServerLoad } from './$types';
 import { appContext } from '#lib/server/context.js';
 import { setPrefs } from '#lib/server/prefs.js';
-import { isSiteAdmin, setSiteTheme, siteTheme } from '#lib/server/site.js';
+import { siteTheme } from '#lib/server/site.js';
 import { createInvite } from '#lib/server/lists.js';
 import { regionProviderCatalogue } from '#lib/server/tmdb.js';
 import { auth } from '#lib/server/auth.js';
@@ -12,13 +12,12 @@ import { text } from '#lib/server/form.js';
 import { hit } from '#lib/server/rate-limit.js';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const { prefs, user } = appContext(locals, url);
+	const { prefs } = appContext(locals, url);
 	return {
 		catalogue: await regionProviderCatalogue(),
 		mode: prefs.mode,
 		themeChoice: prefs.themeChoice,
-		siteTheme: siteTheme(),
-		admin: isSiteAdmin(user.id)
+		siteTheme: siteTheme()
 	};
 };
 
@@ -43,15 +42,6 @@ export const actions: Actions = {
 			cookies.set('mode', mode, { path: '/', maxAge: YEAR, httpOnly: false, sameSite: 'lax' });
 		}
 		return { ok: true };
-	},
-
-	siteTheme: async ({ request, locals }) => {
-		const { user } = appContext(locals);
-		if (!isSiteAdmin(user.id)) return fail(403, { siteThemeMessage: 'Only the site’s admin can.' });
-		const theme = (await request.formData()).get('siteTheme');
-		if (!isTheme(theme)) return fail(400, { siteThemeMessage: 'Pick a theme.' });
-		setSiteTheme(theme);
-		return { siteThemeSaved: true };
 	},
 
 	services: async ({ request, locals }) => {

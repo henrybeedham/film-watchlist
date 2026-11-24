@@ -33,8 +33,8 @@ bun run dev
 ```
 
 Open http://localhost:5173. The first account needs the one-time setup code the server prints
-when it starts (`[setup] … setup code: …`) and owns the first list; everyone after that needs an
-invite link from **Lists**.
+when it starts (`[setup] … setup code: …`), owns the first list and is the site’s admin (see
+**Admin**); everyone after that needs an invite link from **Lists**.
 
 Checks: `bun run check`, `bun run lint`, `bun run build`.
 

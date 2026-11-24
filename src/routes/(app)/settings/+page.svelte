@@ -11,7 +11,6 @@
 	let { data, form }: PageProps = $props();
 
 	let appearanceForm: HTMLFormElement | undefined = $state();
-	let siteForm: HTMLFormElement | undefined = $state();
 	let selectedServices = $derived(new Set(data.services));
 
 	// Previews follow the light/dark mode currently showing.
@@ -121,38 +120,6 @@
 		</div>
 	</section>
 </form>
-
-{#if data.admin}
-	<form method="POST" action="?/siteTheme" bind:this={siteForm} use:enhance={quiet}>
-		<section class="mb-12">
-			<h2 class="label mb-1">Site default theme</h2>
-			<p class="mb-3 text-sm text-muted-foreground">
-				What everyone sees unless they pick their own theme, including on sign-in pages. Only you
-				can change this, as the site’s first account.
-			</p>
-			<div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Site default theme">
-				{#each THEMES as t (t.id)}
-					<label
-						class="flex h-9 cursor-pointer items-center rounded-md border px-3 text-sm has-checked:border-primary has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:ring-2 has-focus-visible:ring-[var(--ring)]"
-					>
-						<input
-							type="radio"
-							name="siteTheme"
-							value={t.id}
-							checked={data.siteTheme === t.id}
-							class="sr-only"
-							onchange={() => siteForm?.requestSubmit()}
-						/>
-						{t.name}
-					</label>
-				{/each}
-			</div>
-			{#if form?.siteThemeMessage}<p class="mt-2 text-sm text-destructive">
-					{form.siteThemeMessage}
-				</p>{/if}
-		</section>
-	</form>
-{/if}
 
 {#if data.tmdbEnabled}
 	<section class="mb-12">
