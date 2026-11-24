@@ -2,7 +2,12 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { appContext } from '#lib/server/context.js';
 import {
+	answerRequest,
+	cancelRequest,
 	createInvite,
+	invitableUsers,
+	inviteUser,
+	pendingForList,
 	createList,
 	deleteList,
 	getList,
@@ -33,7 +38,9 @@ export const load: PageServerLoad = ({ locals, url }) => {
 			shareToken: role === 'owner' ? list.share_token : null,
 			shared: !!list.share_token,
 			members: members(list.id),
-			invites: role === 'owner' ? openInvites(list.id) : []
+			invites: role === 'owner' ? openInvites(list.id) : [],
+			pending: role === 'owner' ? pendingForList(list.id) : [],
+			invitable: role === 'owner' ? invitableUsers(list.id) : []
 		},
 		lists
 	};
@@ -77,6 +84,42 @@ export const actions: Actions = {
 		const id = listIdFrom(await request.formData());
 		requireOwner(id, user.id);
 		return { invite: createInvite(id, user.id) };
+	},
+
+	inviteUser: async ({ locals, request }) => {
+		const { user } = appContext(locals);
+		const f = await request.formData();
+		const id = listIdFrom(f);
+		requireOwner(id, user.id);
+		if (!inviteUser(id, user.id, text(f, 'userId'))) {
+			return fail(400, { inviteUserMessage: 'Choose someone who isn’t already on this list.' });
+		}
+		return { invitedUser: true };
+	},
+
+	cancelRequest: async ({ locals, request }) => {
+		const { user } = appContext(locals);
+		const f = await request.formData();
+		const id = listIdFrom(f);
+		requireOwner(id, user.id);
+		cancelRequest(id, text(f, 'userId'));
+		return { cancelled: true };
+	},
+
+	accept: async ({ locals, request }) => {
+		const { user } = appContext(locals);
+		const id = listIdFrom(await request.formData());
+		if (!answerRequest(id, user.id, true)) {
+			return fail(400, { answerMessage: 'That invitation has been withdrawn.' });
+		}
+		setPrefs(user.id, { currentListId: id });
+		redirect(303, '/');
+	},
+
+	decline: async ({ locals, request }) => {
+		const { user } = appContext(locals);
+		answerRequest(listIdFrom(await request.formData()), user.id, false);
+		return { declined: true };
 	},
 
 	revokeInvite: async ({ locals, request }) => {

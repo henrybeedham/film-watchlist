@@ -148,9 +148,75 @@ export function useInvite(t: string, userId: string): false | { listId: number |
 	return transaction(() => {
 		const invite = findInvite(t);
 		if (!invite) return false;
-		if (invite.listId !== null) addMember(invite.listId, userId);
+		if (invite.listId !== null) {
+			addMember(invite.listId, userId);
+			cancelRequest(invite.listId, userId);
+		}
 		run('UPDATE invites SET used_at = ?, used_by = ? WHERE token = ?', [now(), userId, t]);
 		return { listId: invite.listId };
+	});
+}
+
+// ---- Invites to people who already have an account ------------------------
+
+/** Site users who aren't on the list and haven't already been asked to join it. */
+export function invitableUsers(listId: number) {
+	return all<{ id: string; name: string; email: string }>(
+		`SELECT u.id, u.name, u.email FROM "user" u
+		 WHERE u.id NOT IN (SELECT user_id FROM list_members WHERE list_id = ?)
+		   AND u.id NOT IN (SELECT user_id FROM list_requests WHERE list_id = ?)
+		 ORDER BY u.name COLLATE NOCASE`,
+		[listId, listId]
+	);
+}
+
+/** Asks an existing user to join; false if there's no such user or they're already on it. */
+export function inviteUser(listId: number, invitedBy: string, userId: string) {
+	return transaction(() => {
+		if (!get('SELECT 1 FROM "user" WHERE id = ?', userId) || roleIn(listId, userId)) return false;
+		run(
+			`INSERT INTO list_requests (list_id, user_id, invited_by, created_at) VALUES (?, ?, ?, ?)
+			 ON CONFLICT DO NOTHING`,
+			[listId, userId, invitedBy, now()]
+		);
+		return true;
+	});
+}
+
+/** Who the owner is waiting on. */
+export function pendingForList(listId: number) {
+	return all<{ userId: string; name: string; email: string; createdAt: string }>(
+		`SELECT u.id AS userId, u.name, u.email, r.created_at AS createdAt
+		 FROM list_requests r JOIN "user" u ON u.id = r.user_id
+		 WHERE r.list_id = ? ORDER BY r.created_at`,
+		listId
+	);
+}
+
+/** Lists this person has been asked to join. */
+export function pendingForUser(userId: string) {
+	return all<{ listId: number; listName: string; invitedBy: string }>(
+		`SELECT l.id AS listId, l.name AS listName, u.name AS invitedBy
+		 FROM list_requests r JOIN lists l ON l.id = r.list_id JOIN "user" u ON u.id = r.invited_by
+		 WHERE r.user_id = ? ORDER BY r.created_at`,
+		userId
+	);
+}
+
+export function cancelRequest(listId: number, userId: string) {
+	run('DELETE FROM list_requests WHERE list_id = ? AND user_id = ?', [listId, userId]);
+}
+
+/** Accepts or declines; false if there was no such invitation. */
+export function answerRequest(listId: number, userId: string, accept: boolean) {
+	return transaction(() => {
+		const found = run('DELETE FROM list_requests WHERE list_id = ? AND user_id = ?', [
+			listId,
+			userId
+		]).changes;
+		if (!found) return false;
+		if (accept) addMember(listId, userId);
+		return true;
 	});
 }
 

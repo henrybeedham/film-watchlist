@@ -186,6 +186,17 @@ const MIGRATIONS: (string | ((db: DatabaseSync) => void))[] = [
 	);
 	INSERT INTO site_admins (user_id, added_at)
 		SELECT id, strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM "user" ORDER BY "createdAt", rowid LIMIT 1;
+	`,
+	// 6: inviting someone who already has an account to a list; they accept or decline in the app
+	`
+	CREATE TABLE list_requests (
+		list_id INTEGER NOT NULL REFERENCES lists (id) ON DELETE CASCADE,
+		user_id TEXT NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
+		invited_by TEXT NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
+		created_at TEXT NOT NULL,
+		PRIMARY KEY (list_id, user_id)
+	);
+	CREATE INDEX list_requests_user ON list_requests (user_id);
 	`
 	// add new migrations here
 ];

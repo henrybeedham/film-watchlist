@@ -8,6 +8,8 @@
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Menu from '@lucide/svelte/icons/menu';
 	import Check from '@lucide/svelte/icons/check';
+	import { toast } from 'svelte-sonner';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
@@ -141,6 +143,50 @@
 	</header>
 
 	<main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-8 sm:py-8">
+		{#if data.requests.length}
+			<ul class="mb-8 divide-y border-y" aria-label="Invitations">
+				{#each data.requests as req (req.listId)}
+					<li class="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
+						<p class="min-w-0 flex-[1_1_16rem]">
+							{req.invitedBy} has invited you to join
+							<span class="font-medium">{req.listName}</span>
+						</p>
+						<div class="flex gap-2">
+							<form
+								method="POST"
+								action="/lists?/decline"
+								use:enhance={() =>
+									async ({ result, update }) => {
+										if (result.type === 'success') toast(`Declined ${req.listName}.`);
+										await update();
+									}}
+							>
+								<input type="hidden" name="listId" value={req.listId} />
+								<Button type="submit" variant="outline" size="sm">Decline</Button>
+							</form>
+							<form
+								method="POST"
+								action="/lists?/accept"
+								use:enhance={() =>
+									async ({ result, update }) => {
+										if (result.type === 'redirect') {
+											toast.success(`You’ve joined ${req.listName}.`);
+											await goto(result.location, { invalidateAll: true });
+										} else {
+											if (result.type === 'failure')
+												toast.error('That invitation has been withdrawn.');
+											await update();
+										}
+									}}
+							>
+								<input type="hidden" name="listId" value={req.listId} />
+								<Button type="submit" size="sm">Accept</Button>
+							</form>
+						</div>
+					</li>
+				{/each}
+			</ul>
+		{/if}
 		{@render children()}
 	</main>
 

@@ -5,6 +5,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
+	import * as Select from '#lib/components/ui/select/index.js';
 	import { longDate } from '#lib/format.js';
 	import type { PageProps } from './$types';
 
@@ -24,6 +25,9 @@
 		() =>
 		async ({ update }: { update: (o?: { reset?: boolean }) => Promise<void> }) =>
 			await update({ reset: false });
+
+	let inviteeId = $state('');
+	const invitee = $derived(m?.invitable.find((u) => u.id === inviteeId));
 
 	const shareUrl = $derived(m?.shareToken ? `${data.origin}/s/${m.shareToken}` : '');
 </script>
@@ -111,12 +115,73 @@
 							{/if}
 						</li>
 					{/each}
+					{#each m.pending as person (person.userId)}
+						<li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5">
+							<span class="font-medium text-muted-foreground">{person.name}</span>
+							<span class="truncate text-sm text-muted-foreground">{person.email}</span>
+							<span class="ml-auto text-xs text-muted-foreground">Invited, hasn’t replied</span>
+							<form method="POST" action="?/cancelRequest" use:enhance={quiet}>
+								<input type="hidden" name="listId" value={m.id} />
+								<input type="hidden" name="userId" value={person.userId} />
+								<button
+									class="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+								>
+									Cancel
+								</button>
+							</form>
+						</li>
+					{/each}
 				</ul>
 			</section>
 
 			{#if m.role === 'owner'}
 				<section class="max-w-2xl">
-					<h3 class="label mb-1">Invite someone</h3>
+					<h3 class="label mb-1">Add someone with an account</h3>
+					<p class="mb-3 text-sm text-muted-foreground">
+						They’ll see the invitation next time they open Watchlist, and can accept or decline it.
+					</p>
+					{#if m.invitable.length}
+						<form
+							method="POST"
+							action="?/inviteUser"
+							class="flex flex-wrap gap-2"
+							use:enhance={() =>
+								async ({ result, update }) => {
+									if (result.type === 'success' && invitee) {
+										toast.success(`Invited ${invitee.name}.`);
+										inviteeId = '';
+									}
+									await update({ reset: false });
+								}}
+						>
+							<input type="hidden" name="listId" value={m.id} />
+							<Select.Root type="single" name="userId" bind:value={inviteeId}>
+								<Select.Trigger class="min-w-0 flex-[1_1_16rem]" aria-label="Person to invite">
+									<span class="truncate">{invitee ? invitee.name : 'Choose someone'}</span>
+								</Select.Trigger>
+								<Select.Content>
+									{#each m.invitable as person (person.id)}
+										<Select.Item value={person.id} label={person.name}>
+											<span class="truncate">{person.name}</span>
+											<span class="truncate text-xs text-muted-foreground">{person.email}</span>
+										</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+							<Button type="submit" variant="outline" disabled={!invitee}>Invite</Button>
+						</form>
+						{#if form?.inviteUserMessage}<p class="mt-2 text-sm text-destructive">
+								{form.inviteUserMessage}
+							</p>{/if}
+					{:else}
+						<p class="text-sm text-muted-foreground">
+							Everyone with an account is already on this list or has been invited.
+						</p>
+					{/if}
+				</section>
+
+				<section class="max-w-2xl">
+					<h3 class="label mb-1">Invite someone new</h3>
 					<p class="mb-3 text-sm text-muted-foreground">
 						An invite link lets one person create an account (or use their existing one) and join
 						this list. Each link works once and lasts seven days.
