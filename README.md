@@ -4,10 +4,9 @@
 
 A shared list of the films and series people keep telling you to watch.
 
-- **Import from Apple Notes.** Paste a checklist: ticked items come in as watched, `x2`/`x3`
-  become a suggestion count, `(2022)` or a trailing year helps matching, `(Hugh recommendation)`
-  records who suggested it, and anything after `-` is kept as a note. Duplicates are flagged
-  before anything is saved.
+- **Quick add.** Type a title and pick a suggestion, or add it as typed: `x2`/`x3` become a
+  suggestion count, `(2022)` or a trailing year helps matching, `(Hugh recommendation)` records
+  who suggested it, and anything after `-` is kept as a note. Duplicates are flagged.
 - **Posters and details** from TMDB, matched automatically (typos included) and marked as a film
   or a series. Any match can be changed.
 - **Where to watch in the UK**: streaming, free, rent and buy. Tick the services you have and

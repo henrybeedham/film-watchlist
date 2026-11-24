@@ -72,14 +72,6 @@
 			<div class="ml-auto flex items-center gap-1">
 				<nav class="hidden items-center gap-1 text-sm md:flex" aria-label="More">
 					<a
-						class="rounded-md px-2.5 py-1.5 hover:bg-accent {active('/import')
-							? 'text-foreground'
-							: 'text-muted-foreground'}"
-						href="/import"
-					>
-						Import
-					</a>
-					<a
 						class="rounded-md px-2.5 py-1.5 hover:bg-accent {active('/lists')
 							? 'text-foreground'
 							: 'text-muted-foreground'}"
@@ -114,9 +106,6 @@
 						<Menu class="size-5" strokeWidth={1.5} />
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content align="end" class="min-w-44">
-						<DropdownMenu.Item onSelect={() => (location.href = '/import')}>
-							Import
-						</DropdownMenu.Item>
 						<DropdownMenu.Item onSelect={() => (location.href = '/lists')}>
 							Lists and sharing
 						</DropdownMenu.Item>

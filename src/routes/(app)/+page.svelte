@@ -64,9 +64,8 @@
 			<section class="max-w-lg border-t py-10">
 				<h2 class="display text-2xl">Nothing on the list</h2>
 				<p class="mt-2 text-muted-foreground">
-					Add titles one at a time above, or paste your whole list from Apple Notes.
+					Type a title in the box above to add it. Pick a suggestion to get the right one.
 				</p>
-				<Button href="/import" variant="outline" class="mt-5">Import from Apple Notes</Button>
 			</section>
 		{/snippet}
 	</ItemBrowser>

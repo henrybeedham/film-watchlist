@@ -156,7 +156,6 @@ export interface NewItem {
 	mentions?: number;
 	recommendedBy?: string | null;
 	note?: string | null;
-	watched?: boolean;
 	/** When the person picked a specific TMDB result. */
 	tmdb?: { mediaType: MediaType; tmdbId: number } | null;
 }
@@ -181,7 +180,7 @@ export function addItems(listId: number, userId: string, items: NewItem[]) {
 					Math.max(1, Math.min(99, Math.round(it.mentions ?? 1) || 1)),
 					it.recommendedBy?.trim().slice(0, 100) || null,
 					it.note?.trim().slice(0, 1000) || null,
-					it.watched ? 'watched' : 'want',
+					'want',
 					userId,
 					t,
 					t

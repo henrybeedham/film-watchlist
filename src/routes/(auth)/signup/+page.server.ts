@@ -91,6 +91,6 @@ export const actions: Actions = {
 			const listId = createList(userId, 'Films to watch');
 			setPrefs(userId, { currentListId: listId });
 		}
-		redirect(303, first ? '/import' : '/');
+		redirect(303, '/');
 	}
 };

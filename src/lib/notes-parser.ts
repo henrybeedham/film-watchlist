@@ -1,24 +1,7 @@
-// Turns a pasted Apple Notes checklist (or any one-title-per-line list) into rows to import.
-// Pure and dependency-free so it can be checked in isolation.
+// Reads one typed line ("Severance x2 (2022) - Hugh's pick") into a title and its hints, and makes
+// the keys used to spot duplicates. Pure and dependency-free so it can be checked in isolation.
 
 import type { MediaType } from './types';
-
-export interface ParsedRow {
-	line: number;
-	raw: string;
-	title: string;
-	yearHint: number | null;
-	kindHint: MediaType | null;
-	mentions: number;
-	recommendedBy: string | null;
-	note: string | null;
-	watched: boolean;
-}
-
-export interface ParseResult {
-	heading: string | null;
-	rows: ParsedRow[];
-}
 
 const CHECKBOX = /^\s*(?:[-*•◦]\s*)?\[( |x|X|✓|✔)\]\s*/;
 const SYMBOL_BOX = /^\s*([☐□○◯☑☒✅✓✔])\s*/;
@@ -158,42 +141,4 @@ export function parseLine(input: string, previousTitle: string | null) {
 		note,
 		watched
 	};
-}
-
-export function parseNotes(input: string): ParseResult {
-	const lines = input.replace(/\r\n?/g, '\n').split('\n');
-	const nonEmpty = lines.filter((l) => l.trim());
-	const markedCount = nonEmpty.filter(
-		(l) => CHECKBOX.test(l) || SYMBOL_BOX.test(l) || BULLET.test(l)
-	).length;
-	const mostlyMarked = markedCount >= nonEmpty.length / 2;
-
-	let heading: string | null = null;
-	const rows: ParsedRow[] = [];
-	let previousTitle: string | null = null;
-
-	lines.forEach((raw, i) => {
-		if (!raw.trim()) return;
-		const parsed = parseLine(raw, previousTitle);
-		// In a checklist, an unmarked first line is the note's title ("Film").
-		if (!parsed.marked && mostlyMarked && rows.length === 0 && heading === null) {
-			heading = raw.trim();
-			return;
-		}
-		if (!parsed.title) return;
-		rows.push({
-			line: i + 1,
-			raw: raw.trim(),
-			title: parsed.title,
-			yearHint: parsed.yearHint,
-			kindHint: parsed.kindHint,
-			mentions: parsed.mentions,
-			recommendedBy: parsed.recommendedBy,
-			note: parsed.note,
-			watched: parsed.watched
-		});
-		previousTitle = parsed.title;
-	});
-
-	return { heading, rows };
 }
