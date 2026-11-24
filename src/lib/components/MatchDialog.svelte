@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -14,11 +15,15 @@
 	let loading = $state(false);
 	let searched = $state(false);
 
+	// Fill in and search when the dialog opens. run() reads `query`, so untrack it: otherwise
+	// every keystroke re-runs this and puts the original title back.
 	$effect(() => {
-		if (open) {
-			query = initial;
+		if (!open) return;
+		const start = initial;
+		untrack(() => {
+			query = start;
 			void run();
-		}
+		});
 	});
 
 	async function run() {
