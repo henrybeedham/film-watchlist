@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ItemBrowser from '#lib/components/ItemBrowser.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import { plural } from '#lib/format.js';
 	import type { PageProps } from './$types';
 
@@ -28,9 +29,12 @@
 	showServicesFilter={false}
 >
 	{#snippet empty()}
-		<p class="max-w-lg border-t py-10 text-muted-foreground">
-			Nothing watched yet. Tick something off from To watch and it moves here, with your rating and
-			notes.
-		</p>
+		<section class="max-w-lg border-t py-10">
+			<p class="text-muted-foreground">
+				Nothing watched yet. Tick something off from To watch and it moves here, with your rating
+				and notes.
+			</p>
+			<Button href="/import" variant="outline" class="mt-5">Import from Letterboxd</Button>
+		</section>
 	{/snippet}
 </ItemBrowser>

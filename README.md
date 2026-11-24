@@ -7,6 +7,9 @@ A shared list of the films and series people keep telling you to watch.
 - **Quick add.** Type a title and pick a suggestion, or add it as typed: `x2`/`x3` become a
   suggestion count, `(2022)` or a trailing year helps matching, `(Hugh recommendation)` records
   who suggested it, and anything after `-` is kept as a note. Duplicates are flagged.
+- **Import from Letterboxd.** Choose the export ZIP (Settings → Import from Letterboxd): the
+  watchlist comes in to watch, seen films as watched, and diary entries with their dates, ratings
+  and reviews. Films already on the list are spotted, and importing again doesn't repeat entries.
 - **Posters and details** from TMDB, matched automatically (typos included) and marked as a film
   or a series. Any match can be changed.
 - **Where to watch in the UK**: streaming, free, rent and buy. Tick the services you have and

@@ -220,6 +220,14 @@
 </section>
 
 <section class="mb-12 max-w-xl">
+	<h2 class="label mb-1">Letterboxd</h2>
+	<p class="mb-3 text-sm text-muted-foreground">
+		Bring over your watchlist, the films you’ve seen, and your diary with its ratings and reviews.
+	</p>
+	<Button href="/import" variant="outline">Import from Letterboxd</Button>
+</section>
+
+<section class="mb-12 max-w-xl">
 	<h2 class="label mb-1">Invite someone to Watchlist</h2>
 	<p class="mb-3 text-sm text-muted-foreground">
 		They get their own account and list, without joining any of yours. The link works once and lasts
