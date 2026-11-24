@@ -14,6 +14,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { snapshot } from '$app/navigation';
 	import Rows from '@lucide/svelte/icons/rows-3';
 	import Grid from '@lucide/svelte/icons/layout-grid';
 	import Search from '@lucide/svelte/icons/search';
@@ -52,6 +53,31 @@
 	const sort = $derived(sortChoice ?? sorts[0]);
 	let viewChoice = $state<View | null>(null);
 	const currentView = $derived(viewChoice ?? view);
+
+	// Keep the search, filters and sort when going back to this page from a title.
+	interface Filters {
+		q: string;
+		kind: typeof kind;
+		genre: string;
+		onMine: boolean;
+		sortChoice: SortKey | null;
+		viewChoice: View | null;
+	}
+	const setFilters = (f: Filters) => ({ q, kind, genre, onMine, sortChoice, viewChoice } = f);
+	snapshot<Filters>({
+		id: 'item-browser',
+		capture: () => ({ q, kind, genre, onMine, sortChoice, viewChoice }),
+		restore: setFilters,
+		reset: () =>
+			setFilters({
+				q: '',
+				kind: 'all',
+				genre: '',
+				onMine: false,
+				sortChoice: null,
+				viewChoice: null
+			})
+	});
 
 	let ticking = $state<Item | null>(null);
 	let dialogOpen = $state(false);
