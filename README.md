@@ -14,6 +14,9 @@ A shared list of the films and series people keep telling you to watch.
   or a series. Any match can be changed.
 - **Where to watch in the UK**: streaming, free, rent and buy. Tick the services you have and
   they're shown first, with a filter for them.
+- **Find a magnet**: one click on a title's page searches public torrent indexes through
+  [torlnk](https://torlink.bairon.dev) and lists the best-seeded magnet links; /magnets searches
+  for anything, on a list or not. Set `MAGNET_SEARCH=off` to hide it.
 - **Tonight**: a random pick, filtered by film or series, length, genre and your services, and
   weighted towards things suggested more often.
 - **Coming soon**: unreleased titles wait on their own shelf until their UK release date.

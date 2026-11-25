@@ -37,6 +37,8 @@ services:
       # TMDB API key or read access token, for posters, details and streaming info.
       TMDB_API_KEY: ${TMDB_API_KEY:-}
       WATCH_REGION: ${WATCH_REGION:-GB}
+      # Magnet link search via torlnk. Set to off to hide it.
+      MAGNET_SEARCH: ${MAGNET_SEARCH:-}
     volumes:
       - app-data:/data
 

@@ -88,3 +88,11 @@ export interface TmdbSearchResult {
 	posterPath: string | null;
 	overview: string | null;
 }
+
+export interface MagnetResult {
+	name: string;
+	magnet: string;
+	sizeBytes: number | null;
+	seeders: number;
+	source: string;
+}

@@ -85,3 +85,9 @@ export function initials(name: string): string {
 export function plural(n: number, one: string, many = `${one}s`) {
 	return `${n} ${n === 1 ? one : many}`;
 }
+
+export function fileSize(bytes: number | null | undefined): string {
+	if (!bytes) return '';
+	const gb = bytes / 1024 ** 3;
+	return gb >= 1 ? `${gb.toFixed(1)} GB` : `${Math.round(bytes / 1024 ** 2)} MB`;
+}

@@ -4,6 +4,7 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import Check from '@lucide/svelte/icons/check';
+	import Magnet from '@lucide/svelte/icons/magnet';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
@@ -12,6 +13,7 @@
 	import Poster from '#lib/components/Poster.svelte';
 	import WatchedDialog from '#lib/components/WatchedDialog.svelte';
 	import MatchDialog from '#lib/components/MatchDialog.svelte';
+	import MagnetResults from '#lib/components/MagnetResults.svelte';
 	import { kindLabel, logo, longDate, runtime, stars, year } from '#lib/format.js';
 	import type { Provider } from '#lib/types.js';
 	import type { PageProps } from './$types';
@@ -33,6 +35,13 @@
 	let editOpen = $state(false);
 	let matchOpen = $state(false);
 	let removeOpen = $state(false);
+
+	let magnetSrc = $state<string | null>(null);
+	let magnetsLoading = $state(false);
+	$effect(() => {
+		void item.id;
+		magnetSrc = null;
+	});
 
 	const groups = $derived(
 		d?.providers
@@ -152,7 +161,21 @@
 				</form>
 			{/if}
 			<Button variant="ghost" onclick={() => (editOpen = true)}>Edit</Button>
+			{#if data.magnetsEnabled}
+				<Button
+					variant="ghost"
+					disabled={magnetsLoading}
+					onclick={() => (magnetSrc = `/api/magnets?item=${item.id}&t=${Date.now()}`)}
+				>
+					<Magnet class="size-4" strokeWidth={1.5} />
+					{magnetsLoading ? 'Searching…' : 'Find magnet'}
+				</Button>
+			{/if}
 		</div>
+
+		{#if magnetSrc}
+			<div class="mt-8"><MagnetResults src={magnetSrc} bind:loading={magnetsLoading} /></div>
+		{/if}
 
 		{#if data.tmdbEnabled}
 			{#if item.matchStatus === 'guess'}

@@ -81,6 +81,16 @@
 					>
 						Lists
 					</a>
+					{#if data.magnetsEnabled}
+						<a
+							class="rounded-md px-2.5 py-1.5 hover:bg-accent {active('/magnets')
+								? 'text-foreground'
+								: 'text-muted-foreground'}"
+							href="/magnets"
+						>
+							Magnets
+						</a>
+					{/if}
 					<a
 						class="rounded-md px-2.5 py-1.5 hover:bg-accent {active('/settings')
 							? 'text-foreground'
@@ -111,6 +121,11 @@
 						<DropdownMenu.Item onSelect={() => (location.href = '/lists')}>
 							Lists and sharing
 						</DropdownMenu.Item>
+						{#if data.magnetsEnabled}
+							<DropdownMenu.Item onSelect={() => (location.href = '/magnets')}>
+								Find a magnet
+							</DropdownMenu.Item>
+						{/if}
 						<DropdownMenu.Item onSelect={() => (location.href = '/settings')}>
 							Settings
 						</DropdownMenu.Item>
