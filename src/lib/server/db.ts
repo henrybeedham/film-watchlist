@@ -197,6 +197,15 @@ const MIGRATIONS: (string | ((db: DatabaseSync) => void))[] = [
 		PRIMARY KEY (list_id, user_id)
 	);
 	CREATE INDEX list_requests_user ON list_requests (user_id);
+	`,
+	// 7: features an admin turns on per person (admins have them all)
+	`
+	CREATE TABLE site_permissions (
+		user_id TEXT NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
+		permission TEXT NOT NULL,
+		added_at TEXT NOT NULL,
+		PRIMARY KEY (user_id, permission)
+	);
 	`
 	// add new migrations here
 ];

@@ -45,8 +45,8 @@
 			await update({ reset: false });
 		};
 
-	async function act(action: string, user: SiteUser) {
-		announce(await postAction(`?/${action}`, { userId: user.id }));
+	async function act(action: string, user: SiteUser, extra: Record<string, string> = {}) {
+		announce(await postAction(`?/${action}`, { userId: user.id, ...extra }));
 	}
 
 	function lists(u: SiteUser) {
@@ -91,7 +91,8 @@
 	<h2 class="label mb-1">People</h2>
 	<p class="mb-4 max-w-xl text-sm text-muted-foreground">
 		{plural(data.users.length, 'account')}, {plural(admins, 'admin')}. New people join with an
-		invite link from Settings or from a list.
+		invite link from Settings or from a list.{#if data.magnetsEnabled}
+			Magnet search is for admins and anyone you allow from their menu.{/if}
 	</p>
 
 	<ul class="divide-y border-y">
@@ -103,6 +104,8 @@
 						{#if u.id === data.me}<span class="text-xs text-muted-foreground">You</span>{/if}
 						{#if u.admin}
 							<span class="label text-[0.65rem] text-primary">Admin</span>
+						{:else if data.magnetsEnabled && u.permissions.includes('magnets')}
+							<span class="label text-[0.65rem] text-muted-foreground">Magnets</span>
 						{/if}
 					</p>
 					<p class="truncate text-sm text-muted-foreground">{u.email}</p>
@@ -127,6 +130,23 @@
 							</DropdownMenu.Item>
 						{:else}
 							<DropdownMenu.Item onSelect={() => act('makeAdmin', u)}>Make admin</DropdownMenu.Item>
+						{/if}
+						{#if data.magnetsEnabled}
+							{#if u.admin}
+								<DropdownMenu.Item disabled>Magnet search: admins always have it</DropdownMenu.Item>
+							{:else if u.permissions.includes('magnets')}
+								<DropdownMenu.Item
+									onSelect={() => act('permission', u, { permission: 'magnets', on: '0' })}
+								>
+									Turn off magnet search
+								</DropdownMenu.Item>
+							{:else}
+								<DropdownMenu.Item
+									onSelect={() => act('permission', u, { permission: 'magnets', on: '1' })}
+								>
+									Allow magnet search
+								</DropdownMenu.Item>
+							{/if}
 						{/if}
 						<DropdownMenu.Item onSelect={() => (passwordFor = u)}>
 							Set a new password…

@@ -39,6 +39,38 @@ export function removeAdmin(userId: string) {
 	});
 }
 
+// ---- Permissions -------------------------------------------------------------
+// Features an admin turns on for particular people. Admins have every one.
+
+export const PERMISSIONS = ['magnets'] as const;
+export type Permission = (typeof PERMISSIONS)[number];
+
+export function isPermission(v: unknown): v is Permission {
+	return PERMISSIONS.includes(v as Permission);
+}
+
+export function can(userId: string, permission: Permission) {
+	return (
+		isSiteAdmin(userId) ||
+		!!get('SELECT 1 FROM site_permissions WHERE user_id = ? AND permission = ?', [
+			userId,
+			permission
+		])
+	);
+}
+
+export function setPermission(userId: string, permission: Permission, on: boolean) {
+	if (on) {
+		run('INSERT OR IGNORE INTO site_permissions (user_id, permission, added_at) VALUES (?, ?, ?)', [
+			userId,
+			permission,
+			now()
+		]);
+	} else {
+		run('DELETE FROM site_permissions WHERE user_id = ? AND permission = ?', [userId, permission]);
+	}
+}
+
 // ---- Users -------------------------------------------------------------------
 
 export interface SiteUser {
@@ -48,6 +80,8 @@ export interface SiteUser {
 	joinedAt: string;
 	lastSeenAt: string | null;
 	admin: boolean;
+	/** Granted directly; admins have every permission regardless. */
+	permissions: Permission[];
 	ownedLists: number;
 	sharedLists: number; // lists they own that other people are members of
 	memberOf: number; // other people's lists they belong to
@@ -69,6 +103,7 @@ export function siteUsers(): SiteUser[] {
 		createdAt: unknown;
 		lastSeen: unknown;
 		admin: number;
+		permissions: string | null;
 		ownedLists: number;
 		sharedLists: number;
 		memberOf: number;
@@ -77,6 +112,8 @@ export function siteUsers(): SiteUser[] {
 		`SELECT u.id, u.name, u.email, u."createdAt",
 			(SELECT MAX(s."updatedAt") FROM "session" s WHERE s."userId" = u.id) AS lastSeen,
 			EXISTS (SELECT 1 FROM site_admins a WHERE a.user_id = u.id) AS admin,
+			(SELECT GROUP_CONCAT(p.permission) FROM site_permissions p WHERE p.user_id = u.id)
+				AS permissions,
 			(SELECT COUNT(*) FROM lists l WHERE l.owner_id = u.id) AS ownedLists,
 			(SELECT COUNT(*) FROM lists l WHERE l.owner_id = u.id
 				AND EXISTS (SELECT 1 FROM list_members m WHERE m.list_id = l.id AND m.user_id <> u.id))
@@ -94,6 +131,7 @@ export function siteUsers(): SiteUser[] {
 		joinedAt: iso(r.createdAt) ?? '',
 		lastSeenAt: iso(r.lastSeen),
 		admin: !!r.admin,
+		permissions: (r.permissions?.split(',') ?? []).filter(isPermission),
 		ownedLists: r.ownedLists,
 		sharedLists: r.sharedLists,
 		memberOf: r.memberOf,

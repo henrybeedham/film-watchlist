@@ -5,11 +5,12 @@ import { userLists } from '#lib/server/lists.js';
 import { requireItem } from '#lib/server/items.js';
 import { findMagnets, itemQuery, MAGNETS_ENABLED, textQuery } from '#lib/server/magnets.js';
 import { hit } from '#lib/server/rate-limit.js';
+import { can } from '#lib/server/site.js';
 
 /** `?item=<id>` searches for a title on one of your lists; `?q=…&type=movie|tv` for any text. */
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = requireApiUser(locals);
-	if (!MAGNETS_ENABLED) error(404, 'Magnet search is off.');
+	if (!MAGNETS_ENABLED || !can(user.id, 'magnets')) error(404, 'Not found');
 	const itemId = url.searchParams.get('item');
 	const search = itemId
 		? itemQuery(
