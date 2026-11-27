@@ -126,8 +126,8 @@
 		return list.sort(by[sort]);
 	});
 
-	// Once the page is idle, have the service worker fetch every poster and logo on this list, so
-	// scrolling down and opening a title show them instantly.
+	// Once the page is idle, load every poster and logo on this list, into the browser's cache
+	// (TMDB lets it keep them for a year), so scrolling down and opening a title show them instantly.
 	$effect(() => {
 		const size = currentView === 'grid' ? 'w342' : 'w185';
 		const urls: string[] = [];
