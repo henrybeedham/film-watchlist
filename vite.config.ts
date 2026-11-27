@@ -26,7 +26,8 @@ export default defineConfig({
 					'style-src': ['self', 'unsafe-inline'],
 					'img-src': ['self', 'data:', 'https://image.tmdb.org'],
 					'font-src': ['self', 'data:'],
-					'connect-src': ['self'],
+					// The service worker fetches TMDB images into its cache; WebKit can hold it to this list.
+					'connect-src': ['self', 'https://image.tmdb.org'],
 					'manifest-src': ['self'],
 					'worker-src': ['self'],
 					'object-src': ['none'],

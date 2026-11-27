@@ -7,7 +7,8 @@ import { version } from '$app/env';
 
 const CACHE = `watchlist-${version}`;
 // Kept across deploys: an image at a given TMDB path never changes.
-const IMAGES = 'tmdb-images-v1';
+// v2: drops entries a v1 worker may have stored that iOS home-screen apps can't read back.
+const IMAGES = 'tmdb-images-v2';
 const IMAGE_ORIGIN = 'https://image.tmdb.org';
 // Roughly 30–60 MB at poster sizes; the oldest are dropped first.
 const MAX_IMAGES = 1000;
@@ -42,7 +43,8 @@ sw.addEventListener('fetch', (event) => {
 	const url = new URL(event.request.url);
 	if (event.request.method !== 'GET') return;
 	if (url.origin === IMAGE_ORIGIN && url.pathname.startsWith('/t/p/')) {
-		event.respondWith(cachedImage(url.href));
+		// Whatever goes wrong with the cache, fall back to a plain fetch like the page would make.
+		event.respondWith(cachedImage(url.href).catch(() => fetch(event.request)));
 		return;
 	}
 	if (url.origin !== sw.location.origin) return;
@@ -50,15 +52,30 @@ sw.addEventListener('fetch', (event) => {
 	event.respondWith(caches.match(url.pathname).then((hit) => hit ?? fetch(event.request)));
 });
 
-/** Cache-first. TMDB sends CORS headers, so the stored copy isn't an opaque response. */
+/**
+ * Cache-first. TMDB sends CORS headers, so the stored copy isn't an opaque response.
+ * The hit is read in full before it's used: WebKit (notably home-screen apps on iOS) can keep a
+ * cache entry whose body it has evicted, which would otherwise show as a broken image.
+ */
 async function cachedImage(href: string) {
 	const cache = await caches.open(IMAGES);
 	const hit = await cache.match(href);
-	if (hit) return hit;
+	if (hit) {
+		try {
+			const body = await hit.blob();
+			if (body.size > 0) return new Response(body, { status: hit.status, headers: hit.headers });
+		} catch {
+			// Unreadable: drop it and fetch again below.
+		}
+		await cache.delete(href).catch(() => {});
+	}
 	const res = await fetch(href, { mode: 'cors', credentials: 'omit' });
-	if (res.ok) {
+	if (!res.ok) return res;
+	try {
 		await cache.put(href, res.clone());
 		if (++added % 50 === 0) void trimImages(cache);
+	} catch {
+		// Storage full or refused: still show the image.
 	}
 	return res;
 }

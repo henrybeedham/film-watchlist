@@ -24,6 +24,13 @@
 	let loaded = $state(false);
 	const src = $derived(failed ? null : poster(path, size));
 	const low = $derived(placeholder && !loaded ? poster(path, placeholder) : null);
+
+	/** Server-rendered images can finish (or fail) before hydration attaches onload/onerror. */
+	function settled(img: HTMLImageElement) {
+		if (!img.complete) return;
+		if (img.naturalWidth > 0) loaded = true;
+		else if (img.currentSrc) failed = true;
+	}
 </script>
 
 <div
@@ -43,6 +50,7 @@
 			fetchpriority={eager || placeholder ? 'high' : 'auto'}
 			decoding="async"
 			class="relative size-full object-cover"
+			{@attach settled}
 			onload={() => (loaded = true)}
 			onerror={() => (failed = true)}
 		/>
