@@ -7,7 +7,6 @@ import { version } from '$app/env';
 
 const CACHE = `watchlist-${version}`;
 // Kept across deploys: an image at a given TMDB path never changes.
-// v2: drops entries a v1 worker may have stored that iOS home-screen apps can't read back.
 const IMAGES = 'tmdb-images-v2';
 const IMAGE_ORIGIN = 'https://image.tmdb.org';
 // Roughly 30–60 MB at poster sizes; the oldest are dropped first.
@@ -39,12 +38,32 @@ sw.addEventListener('activate', (event) => {
 	);
 });
 
+// Image hrefs stored in IMAGES, read from the cache when the worker starts.
+const cached = new Set<string>();
+// TMDB's CDN leaves the CORS headers off some images. Those can't be stored readably, so the
+// browser keeps loading them itself (its own HTTP cache still holds them for a year).
+const uncacheable = new Set<string>();
+const ready = caches
+	.open(IMAGES)
+	.then((cache) => cache.keys())
+	.then((keys) => keys.forEach((req) => cached.add(req.url)))
+	.catch(() => {});
+
 sw.addEventListener('fetch', (event) => {
 	const url = new URL(event.request.url);
 	if (event.request.method !== 'GET') return;
 	if (url.origin === IMAGE_ORIGIN && url.pathname.startsWith('/t/p/')) {
-		// Whatever goes wrong with the cache, fall back to a plain fetch like the page would make.
-		event.respondWith(cachedImage(url.href).catch(() => fetch(event.request)));
+		if (cached.has(url.href)) {
+			event.respondWith(
+				fromCache(url.href)
+					.then((hit) => hit ?? fetch(event.request))
+					.catch(() => fetch(event.request))
+			);
+		} else {
+			// Not stored yet: leave the request to the browser, exactly as in a normal tab, and store a
+			// copy in the background for next time.
+			event.waitUntil(warm([url.href], false));
+		}
 		return;
 	}
 	if (url.origin !== sw.location.origin) return;
@@ -53,11 +72,10 @@ sw.addEventListener('fetch', (event) => {
 });
 
 /**
- * Cache-first. TMDB sends CORS headers, so the stored copy isn't an opaque response.
- * The hit is read in full before it's used: WebKit (notably home-screen apps on iOS) can keep a
- * cache entry whose body it has evicted, which would otherwise show as a broken image.
+ * The stored copy, read in full first: WebKit (notably home-screen apps on iOS) can keep a cache
+ * entry whose body it has evicted, which would otherwise show as a blank image.
  */
-async function cachedImage(href: string) {
+async function fromCache(href: string): Promise<Response | null> {
 	const cache = await caches.open(IMAGES);
 	const hit = await cache.match(href);
 	if (hit) {
@@ -65,19 +83,29 @@ async function cachedImage(href: string) {
 			const body = await hit.blob();
 			if (body.size > 0) return new Response(body, { status: hit.status, headers: hit.headers });
 		} catch {
-			// Unreadable: drop it and fetch again below.
+			// Unreadable: drop it below.
 		}
 		await cache.delete(href).catch(() => {});
 	}
-	const res = await fetch(href, { mode: 'cors', credentials: 'omit' });
-	if (!res.ok) return res;
+	cached.delete(href);
+	return null;
+}
+
+/** Fetches `href` with CORS and stores it, so the copy isn't an opaque response. */
+async function store(cache: Cache, href: string) {
+	if (cached.has(href) || uncacheable.has(href)) return;
+	let res: Response;
 	try {
-		await cache.put(href, res.clone());
-		if (++added % 50 === 0) void trimImages(cache);
+		res = await fetch(href, { mode: 'cors', credentials: 'omit' });
 	} catch {
-		// Storage full or refused: still show the image.
+		// No CORS headers on this one (or offline): don't keep trying it this session.
+		uncacheable.add(href);
+		return;
 	}
-	return res;
+	if (!res.ok) return;
+	await cache.put(href, res);
+	cached.add(href);
+	if (++added % 50 === 0) void trimImages(cache);
 }
 
 let added = 0;
@@ -87,7 +115,10 @@ async function trimImages(cache: Cache) {
 	trimming = true;
 	try {
 		const keys = await cache.keys(); // oldest first
-		for (const req of keys.slice(0, Math.max(0, keys.length - MAX_IMAGES))) await cache.delete(req);
+		for (const req of keys.slice(0, Math.max(0, keys.length - MAX_IMAGES))) {
+			await cache.delete(req);
+			cached.delete(req.url);
+		}
 	} finally {
 		trimming = false;
 	}
@@ -104,20 +135,25 @@ sw.addEventListener('message', (event) => {
 	const urls = data.urls.filter(
 		(u): u is string => typeof u === 'string' && u.startsWith(`${IMAGE_ORIGIN}/t/p/`)
 	);
-	warmQueue = [...new Set([...urls, ...warmQueue])].slice(0, MAX_IMAGES);
-	warming ??= drainWarm().finally(() => (warming = null));
-	event.waitUntil(warming);
+	event.waitUntil(warm(urls, true));
 });
 
+function warm(urls: string[], first: boolean) {
+	const queue = first ? [...urls, ...warmQueue] : [...warmQueue, ...urls];
+	warmQueue = [...new Set(queue)].slice(0, MAX_IMAGES);
+	warming ??= drainWarm().finally(() => (warming = null));
+	return warming;
+}
+
 async function drainWarm() {
+	await ready;
 	const cache = await caches.open(IMAGES);
 	const worker = async () => {
 		for (let href = warmQueue.shift(); href; href = warmQueue.shift()) {
-			if (await cache.match(href)) continue;
 			try {
-				await cachedImage(href);
+				await store(cache, href);
 			} catch {
-				// Offline or TMDB hiccup: it'll be fetched when shown.
+				// Storage full or a TMDB hiccup: it'll be tried again when next shown.
 			}
 		}
 	};
